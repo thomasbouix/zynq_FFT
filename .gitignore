@@ -53,3 +53,5 @@ dkms.conf
 
 # VIVADO files
 */ip_repo/*
+*.log
+*.cf
