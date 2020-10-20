@@ -7,7 +7,7 @@ entity colours is
 		DATA_LENGTH	: integer := 4
 	);
 	port(
-		reset		: in  std_logic;
+		reset_n		: in  std_logic;
 		clk		: in  std_logic;
 		
 		count_v		: in integer range 0 to 1023;        
@@ -23,10 +23,10 @@ end entity colours;
 
 architecture arc_colours of colours is
 begin
-	process(clk,reset)
+	process(clk,reset_n)
 	begin  
     
-		if reset = '1' then
+		if reset_n = '1' then
 		  red 	<= x"0";
 		  green <= x"0";
 		  blue 	<= x"0"; 

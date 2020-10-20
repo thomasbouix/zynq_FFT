@@ -8,13 +8,13 @@ entity vga_controller is
 		DATA_LENGTH	:	INTEGER := 4
 	);
 	port(
-		reset		: in  std_logic;
+		reset_n		: in  std_logic;
 		clk		: in  std_logic;   
 		
 		ver_sync	: out std_logic;
 		hor_sync	: out std_logic;
 	
-		red			: out std_logic_vector((DATA_LENGTH-1) downto 0);  
+		red		: out std_logic_vector((DATA_LENGTH-1) downto 0);  
 		green		: out std_logic_vector((DATA_LENGTH-1) downto 0); 
 		blue		: out std_logic_vector((DATA_LENGTH-1) downto 0)
 	);
@@ -27,10 +27,10 @@ architecture arc_vga_controller of vga_controller is
 
 begin
 
-  process(clk,reset)
+  process(clk,reset_n)
   begin  
     
-    if reset = '1'  then
+    if reset_n = '0'  then
       count_v <= 0;
       count_h <= 0;
       reg_hor_sync <= '1';
@@ -67,7 +67,8 @@ begin
     end if;
   end process;
   
-  U0_COLOURS : entity work.colours  port map(reset => reset,clk => clk,count_v => count_v,count_h => count_h,red => red,green => green, blue => blue);
-
+  	U0_COLOURS : entity work.colours  port map(reset_n => reset_n,clk => clk,count_v => count_v,count_h => count_h,red => red,green => green, blue => blue);
+	ver_sync <= reg_ver_sync;
+	hor_sync <= reg_hor_sync;
 	 
 end architecture arc_vga_controller;
