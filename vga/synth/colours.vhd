@@ -4,16 +4,16 @@ use ieee.numeric_std.all;
 
 entity colours is
 	generic(
-		DATA_LENGTH	: integer := 16
+		DATA_LENGTH	: integer := 4
 	);
 	port(
 		reset		: in  std_logic;
-		clk			: in  std_logic;
+		clk		: in  std_logic;
 		
 		count_v		: in integer range 0 to 1023;        
 		count_h   	: in integer range 0 to 1023;
 		
-		red			: out std_logic_vector((DATA_LENGTH-1) downto 0); 
+		red		: out std_logic_vector((DATA_LENGTH-1) downto 0); 
 		green		: out std_logic_vector((DATA_LENGTH-1) downto 0); 
 		blue     	: out std_logic_vector((DATA_LENGTH-1) downto 0)
 	);        

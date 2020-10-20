@@ -5,7 +5,7 @@ set_property ip_repo_paths ip_repo [current_project]
 update_ip_catalog
 set_property board_part em.avnet.com:zed:part0:1.3 [current_project]
 set_property target_language VHDL [current_project]
-import_files -fileset sources_1 -norecurse synth/$ip_name.vhd
+import_files -fileset sources_1 synth/
 import_files -fileset sim_1 -norecurse sim/$ip_name\_tb.vhd
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1

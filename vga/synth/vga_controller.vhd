@@ -5,11 +5,11 @@ use ieee.numeric_std.all;
 entity vga_controller is 
 	generic(
 		FREQ_CLK	:	INTEGER := 50000000;
-		DATA_LENGTH	:	INTEGER := 16
+		DATA_LENGTH	:	INTEGER := 4
 	);
 	port(
 		reset		: in  std_logic;
-		clk			: in  std_logic;   
+		clk		: in  std_logic;   
 		
 		ver_sync	: out std_logic;
 		hor_sync	: out std_logic;
