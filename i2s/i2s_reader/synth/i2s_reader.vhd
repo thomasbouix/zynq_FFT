@@ -26,7 +26,7 @@ end entity i2s_reader;
 architecture arc_i2s_reader of i2s_reader is
 	
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
-	signal count_data	: 	integer range 0 to DATA_LENGTH;
+	signal count_data	: 	integer; --range 0 to DATA_LENGTH + 1;
 
 	signal cpt_sclk		:	integer; -- range 0 to (MCLK_FREQ/SCLK_FREQ) - 1;
 	signal cpt_lrck		:	integer; -- range 0 to (MCLK_FREQ/LRCK_FREQ) - 1;
@@ -69,7 +69,7 @@ begin
 			if rising_edge(reg_sclk) then				
 				-- on laisse un bit de décalage au début		
 				if (count_data = 0) then
-					count_data = 1;
+					count_data <= 1;
 				-- ecriture de din[1:16] (din[0:15] décalé de 1)
 				elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then		
 					reg_data(count_data - 1) <= din;
