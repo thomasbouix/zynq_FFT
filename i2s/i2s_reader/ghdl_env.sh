@@ -1,1 +1,1 @@
-export PATH=/home/thomas/polytech/projet_implementation/ghdl_builder/usr/bin:$PATH
+export PATH=/home/thomas/polytech/projet_implementation/ressources/ghdl_builder/usr/bin:$PATH

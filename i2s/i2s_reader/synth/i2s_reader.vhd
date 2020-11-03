@@ -10,13 +10,13 @@ entity i2s_reader is
 	);
 	port(
 		reset	:	in	std_logic;
-		clk		:	in	std_logic;
+		clk	:	in	std_logic;
 		data	:	out	std_logic_vector((DATA_LENGTH-1) downto 0);
 		
 		mclk	:	out	std_logic;
-		sclk	:	out std_logic;
-		lrck	:	out std_logic;
-		din		:	in 	std_logic
+		sclk	:	out 	std_logic;
+		lrck	:	out 	std_logic;
+		din	:	in 	std_logic
 	);
 end entity i2s_reader;
 
@@ -52,14 +52,14 @@ begin
 				reg_sclk <= not(reg_sclk);
 				cmp_sclk <= 0;
 			else
-				cmp_sclk 	<= cmp_sclk + 1;
+				cmp_sclk <= cmp_sclk + 1;
 			end if;
 			
 			if(cmp_lrck > ((MCLK_FREQ/LRCK_FREQ)/2)-2 ) then
 				reg_lrck <= not(reg_lrck);
 				cmp_lrck <= 0;
 			else
-				cmp_lrck 	<= cmp_lrck + 1;
+				cmp_lrck <= cmp_lrck + 1;
 			end if;
 			
 			if(reg_lrck = '1') then
