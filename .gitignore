@@ -52,6 +52,6 @@ Mkfile.old
 dkms.conf
 
 # VIVADO files
-*/ip_repo/*
+*/ip_repo
 *.log
 *.cf
