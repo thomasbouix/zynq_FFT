@@ -10,7 +10,7 @@ architecture arc_i2s_reader_tb of i2s_reader_tb is
     signal data : std_logic_vector(15 downto 0);
 begin
 
-    U : entity work.i2s_reader port map (reset => reset, clk => clk, data => data, mclk => mclk, sclk => sclk, lrck=>lrck, din=>din);
+    i2s_reader : entity work.i2s_reader port map (reset => reset, clk => clk, data => data, mclk => mclk, sclk => sclk, lrck=>lrck, din=>din);
 	
 	process
 	begin
