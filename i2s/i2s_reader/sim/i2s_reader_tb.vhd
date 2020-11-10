@@ -1,55 +1,51 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-
 entity i2s_reader_tb is
 end i2s_reader_tb;
 
 architecture arc_i2s_reader_tb of i2s_reader_tb is
-    signal reset, clk, mclk, sclk, lrck, din : std_logic; 
-    signal data : std_logic_vector(15 downto 0);
+	signal reset, clk, mclk, sclk, lrck, din : std_logic; 
+	signal data : std_logic_vector(15 downto 0);
+	constant clock_t : time :=  44.288941 ns;
 begin
 
-    U : entity work.i2s_reader port map (reset => reset, clk => clk, data => data, mclk => mclk, sclk => sclk, lrck=>lrck, din=>din);
+	i2s_reader : entity work.i2s_reader 
+    		port map (reset => reset, clk => clk, data => data, mclk => mclk, sclk => sclk, lrck=>lrck, din=>din);
 	
-	process
-	begin
+	rst_p : process begin
 		reset <= '1';
-		wait for 44.288941 ns;
+		wait for clock_t;
 		reset <= '0';
 		wait for 50 us;
-
 		wait;
 	end process;
 	
-	process
-	begin
-	
+	clock : process begin
 		clk <= '0';
-		wait for 22.1444705 ns;
+		wait for clock_t;
 		clk <= '1';
-		wait for 22.1444705 ns;
+		wait for clock_t;
+	end process clock;
 	
-	end process;
-	
-	process
-	begin
-	
-		wait for 22.1444705 ns;
+	data_in : process begin
+		wait until rising_edge(sclk);
 		din <= '0';
-		wait for 44.288941 ns;
+		wait until rising_edge(sclk);
 		din <= '1';
-		wait for 44.288941 ns;
+		wait until rising_edge(sclk);
 		din <= '0';
-		wait for 44.288941 ns;
+		wait until rising_edge(sclk);
+		din <= '1';
+		wait until rising_edge(sclk);
+		din <= '1';
+		wait until rising_edge(sclk);
 		din <= '0';
-		wait for 44.288941 ns;
-		din <= '1';
-		wait for 44.288941 ns;
-		din <= '1';
-		wait for 44.288941 ns;
-		
-	end process;
+		wait until rising_edge(sclk);
+		din <= '0';
+		wait until rising_edge(sclk);
+		din <= '0';
+	end process data_in;
 	
 	
 end architecture arc_i2s_reader_tb ;

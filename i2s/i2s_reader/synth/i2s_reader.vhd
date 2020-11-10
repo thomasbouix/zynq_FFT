@@ -1,5 +1,5 @@
 -- I2S Reader en mode esclave + receiver
--- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits
+-- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits en sortie
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -9,15 +9,15 @@ entity i2s_reader is
 		MCLK_FREQ	:	INTEGER := 22579200;	-- mclk/sclk = 8
 		SCLK_FREQ	:	INTEGER := 2822400;	-- sclk/lrck = 64 
 		LRCK_FREQ	:	INTEGER	:= 44100;	-- frequence d'echantillonage 
-		DATA_LENGTH	:	INTEGER	:= 16
+		DATA_LENGTH	:	INTEGER	:= 16		-- taille des données de l'ADC
 	);
 	port(
-		reset	:	in	std_logic;
-		clk	:	in	std_logic;
+		reset	:	in	std_logic;		-- fourni par le systeme
+		clk	:	in	std_logic;		-- fourni par le systeme
 		data	:	out	std_logic_vector((DATA_LENGTH-1) downto 0);
 		
 		mclk	:	out	std_logic;		-- clock du systeme
-		sclk	:	out 	std_logic;		-- frequence din
+		sclk	:	out 	std_logic;		-- bit clock : frequence de din
 		lrck	:	out 	std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
 		din	:	in 	std_logic		-- sortie de l'ADC
 	);
@@ -26,59 +26,68 @@ end entity i2s_reader;
 architecture arc_i2s_reader of i2s_reader is
 	
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
-	signal count_data	: 	integer range 0 to DATA_LENGTH;
+	signal count_data	: 	integer; --range 0 to DATA_LENGTH + 1;
 
-	signal cmp_sclk		:	integer; -- range 0 to (CLK_FREQ/SCLK_FREQ);
-	signal cmp_lrck		:	integer; -- range 0 to (CLK_FREQ/LRCK_FREQ);
+	signal cpt_sclk		:	integer; -- range 0 to (MCLK_FREQ/SCLK_FREQ) - 1;
+	signal cpt_lrck		:	integer; -- range 0 to (MCLK_FREQ/LRCK_FREQ) - 1;
 	
 	signal reg_sclk		:	std_logic;
 	signal reg_lrck		:	std_logic;
 
 
 begin
-
-	process(clk,reset)
+	-- Generation de SCLK et LRCK
+	clocks : process(clk, reset)
 	begin
 		if(reset = '1') then
-			reg_data 	<= (others => '0');
-			count_data 	<= 0;
-			
-			cmp_sclk  	<= 0;
-			cmp_lrck 	<= 0;
+		
+			cpt_sclk  	<= 0;
+			cpt_lrck 	<= 0;
 
 			reg_sclk	<= '0';
 			reg_lrck	<= '0';
 			
 		elsif rising_edge(clk) then
 				
-			if(cmp_sclk > ((MCLK_FREQ/SCLK_FREQ)/2)-2 ) then
+			if (cpt_sclk = ((MCLK_FREQ/SCLK_FREQ)-1)) then	-- 7
 				reg_sclk <= not(reg_sclk);
-				cmp_sclk <= 0;
+				cpt_sclk <= 0;
 			else
-				cmp_sclk <= cmp_sclk + 1;
+				cpt_sclk <= cpt_sclk + 1;
 			end if;
 			
-			if(cmp_lrck > ((MCLK_FREQ/LRCK_FREQ)/2)-2 ) then
+			if (cpt_lrck = ((SCLK_FREQ/LRCK_FREQ)-1)) then	-- 63 
 				reg_lrck <= not(reg_lrck);
-				cmp_lrck <= 0;
+				cpt_lrck <= 0;
 			else
-				cmp_lrck <= cmp_lrck + 1;
+				cpt_lrck <= cpt_lrck + 1;
 			end if;
-			
-			if(reg_lrck = '1') then
-				if(count_data < 16) then
-					reg_data(count_data) <= din;
-					count_data <= count_data + 1;
-				end if;
-			else
-				count_data <= 0;
-			end if;
-				
 		end if;
-	
-	end process;
-	
-	data <= reg_data;
+	end process clocks;
+
+	-- GESTION DE LA SORTIE DE DONNEES	
+	data_p : process (reset, reg_sclk)
+       	begin
+		if (reset = '1') then 
+			reg_data 	<= (others => '0');
+			count_data 	<= 0;
+			data 		<= (others => '0');
+
+		elsif rising_edge(reg_sclk) then -- on n'écoute qu'une seule voix stereo 
+			
+			if (count_data = 0) then -- on laisse un bit de décalage au début		
+				count_data <= 1; -- ecriture de din[1:16] (din[0:15] décalé de 1)
+
+			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then		
+				reg_data(count_data - 1) <= din;
+				count_data <= count_data + 1;
+			else
+				count_data 	<= 0;
+				reg_data 	<= (others => '0'); 
+				data 		<= reg_data;
+			end if;
+		end if;	
+	end process data_p;	
 	
 	mclk <= clk;
 	sclk <= reg_sclk;
