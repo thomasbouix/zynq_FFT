@@ -71,6 +71,7 @@ begin
 		if (reset = '1') then 
 			reg_data 	<= (others => '0');
 			count_data 	<= 0;
+			data 		<= (others => '0');
 
 		elsif rising_edge(reg_sclk) then -- on n'écoute qu'une seule voix stereo 
 			
@@ -81,8 +82,9 @@ begin
 				reg_data(count_data - 1) <= din;
 				count_data <= count_data + 1;
 			else
-				count_data <= 0;
-				data <= reg_data;
+				count_data 	<= 0;
+				reg_data 	<= (others => '0'); 
+				data 		<= reg_data;
 			end if;
 		end if;	
 	end process data_p;	
