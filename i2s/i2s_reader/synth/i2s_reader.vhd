@@ -36,13 +36,11 @@ architecture arc_i2s_reader of i2s_reader is
 
 
 begin
-
-	process(clk,reset)
+	-- Generation de SCLK et LRCK
+	clocks : process(clk, reset)
 	begin
 		if(reset = '1') then
-			reg_data 	<= (others => '0');
-			count_data 	<= 0;
-			
+		
 			cpt_sclk  	<= 0;
 			cpt_lrck 	<= 0;
 
@@ -64,28 +62,30 @@ begin
 			else
 				cpt_lrck <= cpt_lrck + 1;
 			end if;
+		end if;
+	end process clocks;
 
-			-- on n'écoute qu'une seule voix stereo
-			if rising_edge(reg_sclk) then				
-				-- on laisse un bit de décalage au début		
-				if (count_data = 0) then
-					count_data <= 1;
-				-- ecriture de din[1:16] (din[0:15] décalé de 1)
-				elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then		
-					reg_data(count_data - 1) <= din;
-					count_data <= count_data + 1;
-				else
-					count_data <= count_data + 1;
-				end if;
+	-- GESTION DE LA SORTIE DE DONNEES	
+	data_p : process (reset, reg_sclk)
+       	begin
+		if (reset = '1') then 
+			reg_data 	<= (others => '0');
+			count_data 	<= 0;
+
+		elsif rising_edge(reg_sclk) then -- on n'écoute qu'une seule voix stereo 
+			
+			if (count_data = 0) then -- on laisse un bit de décalage au début		
+				count_data <= 1; -- ecriture de din[1:16] (din[0:15] décalé de 1)
+
+			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then		
+				reg_data(count_data - 1) <= din;
+				count_data <= count_data + 1;
 			else
 				count_data <= 0;
+				data <= reg_data;
 			end if;
-				
-		end if;
-	
-	end process;
-	
-	data <= reg_data;
+		end if;	
+	end process data_p;	
 	
 	mclk <= clk;
 	sclk <= reg_sclk;
