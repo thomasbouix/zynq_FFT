@@ -88,13 +88,13 @@ begin
 				reg_data(count_data - 1) <= din;
 				count_data <= count_data + 1;
 			elsif (count_data = DATA_LENGTH) then
-				tvalid = '1';
+				tvalid <= '1';
 				count_data <= count_data + 1;
 			else
-				tvalid = '0';
+				tvalid <= '0';
 				count_data 	<= 0;
 				reg_data 	<= (others => '0');
-				tvalid = '0';
+				tvalid <= '0';
 			end if;
 		end if;
 	end process data_p;
