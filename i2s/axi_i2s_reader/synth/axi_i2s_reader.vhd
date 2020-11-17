@@ -30,9 +30,6 @@ end entity i2s_reader;
 
 architecture arc_i2s_reader of i2s_reader is
 
-	type t_state is (WAITFOR, SEND);
-	signal state : t_state;
-
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
 	signal count_data	: integer; --range 0 to DATA_LENGTH + 1;
 
@@ -74,7 +71,8 @@ begin
 	end process clocks_p;
 
 	-- Gestion des donnees : construction reg_data en continue
-	data_p : process (reset, reg_sclk)
+	-- TVALID = '1' si une donnée est prête
+ 	data_p : process (reset, reg_sclk)
        	begin
 		if (reset = '1') then
 			reg_data 	<= (others => '0');
@@ -89,22 +87,28 @@ begin
 			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then
 				reg_data(count_data - 1) <= din;
 				count_data <= count_data + 1;
+			elsif (count_data = DATA_LENGTH) then
+				tvalid = '1';
+				count_data <= count_data + 1;
 			else
+				tvalid = '0';
 				count_data 	<= 0;
 				reg_data 	<= (others => '0');
+				tvalid = '0';
 			end if;
 		end if;
 	end process data_p;
 
-	-- On ne produit tdata que si le state est à SEND, on droppe les pacquets sinon
+	-- On ne produit tdata que si une donnée est 'valid', et que le dma est 'ready'
+	-- On drop les pacquets sinon
 	state_p : process(clk, reset) is
 	begin
-			if (state = WAITFOR) then
-
-			elsif (state = SEND) then
-
-			else
-
+			if (rising_edge(clk)) then
+				if (tvalid = '1' and tready = '1') then
+					tdata <= reg_data;
+				else
+					tdata <= (others => '0');
+				end if;
 			end if;
 	end process state_p;
 
