@@ -16,7 +16,9 @@ entity i2s_reader is
 		clk		:	in	std_logic;
 
 		-- AXI
-		tdata	:	out	std_logic_vector((DATA_LENGTH-1) downto 0);
+		tready	: in std_logic;		-- envoyé par l'esclave : on envoie une donnée puis on bloque jusqu'à avoir un TREADY
+		tvalid	: out std_logic;	-- mis à 1 quand une donnée est disponible (écrite sur le bus)
+		tdata		:	out	std_logic_vector((DATA_LENGTH-1) downto 0);	-- sortie sur 2 octets, on enchaine à chaque READY
 
 		-- I2S
 		mclk	:	out		std_logic;		-- clock du systeme
@@ -27,6 +29,9 @@ entity i2s_reader is
 end entity i2s_reader;
 
 architecture arc_i2s_reader of i2s_reader is
+
+	type t_state is (WAITFOR, SEND);
+	signal state : t_state;
 
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
 	signal count_data	: integer; --range 0 to DATA_LENGTH + 1;
@@ -39,6 +44,69 @@ architecture arc_i2s_reader of i2s_reader is
 
 
 begin
+
+	-- Generation de SCLK et LRCK
+	clocks_p : process(clk, reset)
+	begin
+		if(reset = '1') then
+
+			cpt_sclk  <= 0;
+			cpt_lrck 	<= 0;
+			reg_sclk	<= '0';
+			reg_lrck	<= '0';
+
+		elsif rising_edge(clk) then
+
+			if (cpt_sclk = ((MCLK_FREQ/SCLK_FREQ)-1)) then	-- 7
+				reg_sclk <= not(reg_sclk);
+				cpt_sclk <= 0;
+			else
+				cpt_sclk <= cpt_sclk + 1;
+			end if;
+
+			if (cpt_lrck = ((SCLK_FREQ/LRCK_FREQ)-1)) then	-- 63
+				reg_lrck <= not(reg_lrck);
+				cpt_lrck <= 0;
+			else
+				cpt_lrck <= cpt_lrck + 1;
+			end if;
+		end if;
+	end process clocks_p;
+
+	-- Gestion des donnees : construction reg_data en continue
+	data_p : process (reset, reg_sclk)
+       	begin
+		if (reset = '1') then
+			reg_data 	<= (others => '0');
+			count_data 	<= 0;
+			tdata 		<= (others => '0');
+
+		elsif rising_edge(reg_sclk) then -- on n'écoute qu'une seule voix stereo
+
+			if (count_data = 0) then -- on laisse un bit de décalage au début
+				count_data <= 1; -- ecriture de din[1:16] (din[0:15] décalé de 1)
+
+			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then
+				reg_data(count_data - 1) <= din;
+				count_data <= count_data + 1;
+			else
+				count_data 	<= 0;
+				reg_data 	<= (others => '0');
+			end if;
+		end if;
+	end process data_p;
+
+	-- On ne produit tdata que si le state est à SEND, on droppe les pacquets sinon
+	state_p : process(clk, reset) is
+	begin
+			if (state = WAITFOR) then
+
+			elsif (state = SEND) then
+
+			else
+
+			end if;
+	end process state_p;
 
 
 end architecture arc_i2s_reader;
