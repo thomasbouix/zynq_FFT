@@ -33,11 +33,13 @@ architecture arc_i2s_reader of i2s_reader is
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
 	signal count_data	: integer; -- range 0 to DATA_LENGTH + 1;
 
-	signal cpt_sclk		:	unsigned(1 downto 0);					-- divise par 4 mclk
-	signal cpt_lrck		:	std_logic_vector(5 downto 0);	-- divise par 64 mclk
+	signal cpt_sclk		:	unsigned(1 downto 0);		-- divise par 4 mclk
+	signal cpt_lrck		:	unsigned(5 downto 0);		-- divise par 64 mclk
 
 	signal reg_sclk		:	std_logic;
 	signal reg_lrck		:	std_logic;
+
+	signal tvalid_reg : std_logic;
 
 begin
 
@@ -50,16 +52,16 @@ begin
 			reg_lrck	<= '0';
 		elsif rising_edge(clk) then
 			cpt_lrck <= cpt_lrck + 1;
-			cpt_sclk <= cpt_srck + 1;
+			cpt_sclk <= cpt_sclk + 1;
 		end if;
 	end process clocks_p;
 
 	mclk <= clk;
-	sclk <= cpt_srck(1);
+	sclk <= cpt_sclk(1);
 	lrck <= cpt_lrck(5);
 
 	-- Gestion des donnees : construction reg_data en continue
-	-- TVALID = '1' si une donnée est prête
+	-- TVALID_REG = '1' si une donnée est prête
  	data_p : process (resetn, reg_sclk)
        	begin
 		if (resetn = '0') then
@@ -78,23 +80,24 @@ begin
 				count_data <= count_data + 1;
 				-- donnée prête
 				if (count_data = DATA_LENGTH) then
-					tvalid <= '1';
+					tvalid_reg <= '1';
 				end if;
 
 			else
-				tvalid 			<= '0';
+				tvalid_reg	<= '0';
 				count_data 	<= 0;
 				reg_data 		<= (others => '0');
-				tvalid 			<= '0';
 			end if;
 		end if;
 	end process data_p;
+
+	tvalid <= tvalid_reg;
 
 	-- On ne produit tdata que si une donnée est 'valid', et que le dma est 'ready'
 	-- On drop les pacquets sinon
 	state_p : process(clk) is begin
 			if (rising_edge(clk)) then
-				if (tvalid = '1') then
+				if (tvalid_reg = '1') then
 					tdata <= reg_data;
 				else
 				end if;

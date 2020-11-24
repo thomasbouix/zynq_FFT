@@ -6,15 +6,15 @@ end axi_i2s_reader_tb;
 
 architecture arc of axi_i2s_reader_tb is
 
-  signal reset, clk : std_logic;
-  signal mclk, sclk, din : std_logic;
+  signal resetn, clk : std_logic;
+  signal mclk, sclk, lrck, din : std_logic;
   signal tvalid, tready : std_logic;
   signal tdata : std_logic_vector(15 downto 0);
 
 begin
 
   axi_i2s_reader : entity work.i2s_reader port map (
-                      reset=>reset, clk=>clk,
+                      resetn=>resetn, clk=>clk,
                       mclk=>mclk, sclk=>sclk, lrck=>lrck, din=>din,
                       tvalid=>tvalid, tready=>tready,
                       tdata=>tdata);
