@@ -4,7 +4,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all
+use ieee.numeric_std.all;
 
 entity i2s_reader is
 	generic(
@@ -62,7 +62,7 @@ begin
 	-- TVALID = '1' si une donnée est prête
  	data_p : process (resetn, reg_sclk)
        	begin
-		if (reset = '0') then
+		if (resetn = '0') then
 			reg_data 		<= (others => '0');
 			count_data 	<= 0;
 			tdata 			<= (others => '0');
