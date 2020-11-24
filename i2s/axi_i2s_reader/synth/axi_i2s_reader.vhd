@@ -53,12 +53,14 @@ begin
 		elsif rising_edge(clk) then
 			cpt_lrck <= cpt_lrck + 1;
 			cpt_sclk <= cpt_sclk + 1;
+			reg_sclk <= cpt_sclk(1);
+			reg_lrck <= cpt_lrck(5);
 		end if;
 	end process clocks_p;
 
 	mclk <= clk;
-	sclk <= cpt_sclk(1);
-	lrck <= cpt_lrck(5);
+	sclk <= reg_sclk;
+	lrck <= reg_lrck;
 
 	-- Gestion des donnees : construction reg_data en continue
 	-- TVALID_REG = '1' si une donnée est prête
@@ -74,13 +76,13 @@ begin
 			-- on laisse un bit de décalage au début
 			if (count_data = 0) then
 				count_data <= 1; 				-- ecriture de din[1:16] (din[0:15] décalé de 1)
-
 			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then
 				reg_data(count_data - 1) <= din;
 				count_data <= count_data + 1;
 				-- donnée prête
-				if (count_data = DATA_LENGTH) then
+				if ( count_data = DATA_LENGTH ) then
 					tvalid_reg <= '1';
+					tdata <= reg_data;
 				end if;
 
 			else
@@ -92,16 +94,5 @@ begin
 	end process data_p;
 
 	tvalid <= tvalid_reg;
-
-	-- On ne produit tdata que si une donnée est 'valid', et que le dma est 'ready'
-	-- On drop les pacquets sinon
-	state_p : process(clk) is begin
-			if (rising_edge(clk)) then
-				if (tvalid_reg = '1') then
-					tdata <= reg_data;
-				else
-				end if;
-			end if;
-	end process state_p;
 
 end architecture arc_i2s_reader;
