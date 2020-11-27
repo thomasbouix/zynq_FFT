@@ -8,11 +8,11 @@ use ieee.numeric_std.all;
 
 entity i2s_reader is
 	generic(
-		DATA_LENGTH	:	INTEGER	:= 16			-- taille des données du PMOD
+		DATA_LENGTH	:	INTEGER	:= 16	-- taille des données du PMOD
 	);
 	port(
 		-- SYSTEM
-		resetn	:	in	std_logic;	-- RESET ACTIVE LOW
+		resetn	:	in	std_logic;		-- RESET ACTIVE LOW
 		clk			:	in	std_logic;
 
 		-- AXI
@@ -33,7 +33,7 @@ architecture arc_i2s_reader of i2s_reader is
 
 	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);	-- construction en continue
 	signal data_ready	: std_logic_vector((DATA_LENGTH-1) downto 0);	-- sauvegarde le dernier data construit
-	signal count_data	: integer; -- range 0 to DATA_LENGTH + 1;
+	signal count_data	: integer; 																		-- range 0 to DATA_LENGTH + 1;
 
 	signal cpt_sclk		:	unsigned(1 downto 0);		-- divise par 4 mclk
 	signal cpt_lrck		:	unsigned(5 downto 0);		-- divise par 64 mclk
@@ -42,7 +42,8 @@ architecture arc_i2s_reader of i2s_reader is
 	signal reg_lrck		:	std_logic;
 
 	signal reg_tvalid : std_logic;
-	signal cpt_tlast	: unsigned(9 downto 0);
+	signal cpt_tlast	: unsigned(10 downto 0);
+	signal tlast_carry: std_logic;							-- cpt_tlast(10) à sclk - 1
 
 begin
 
@@ -101,6 +102,7 @@ begin
 	axi_p : process(resetn, reg_sclk) begin
 			if (resetn = '0') then
 					reg_tvalid 	<= '0';
+					tlast_carry <= '0';
 					cpt_tlast		<= (others => '0');
 					tvalid 			<= '0';
 					tdata	 			<= (others => '0');
@@ -116,11 +118,13 @@ begin
 					if (tready = '1' and reg_tvalid = '1') then
 							tdata 			<= data_ready;
 							reg_tvalid 	<= '0';
+							tlast_carry <= cpt_tlast(10);
 							cpt_tlast 	<= cpt_tlast + 1;
 					else end if;
 
-					-- génération de tlast
-					if rising_edge(cpt_tlast(9)) then	-- tous les 2048 envois
+					-- génération de tlast (1 tous les 2048 envois)
+					-- falling edge cpt_tlast(10)
+					if (tlast_carry = '1') and (cpt_tlast(10) = '0') then
 							tlast <= '1';
 					else
 							tlast <= '0';

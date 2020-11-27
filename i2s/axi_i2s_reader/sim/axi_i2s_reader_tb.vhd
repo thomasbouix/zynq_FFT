@@ -26,7 +26,7 @@ begin
       tready <= '1';
       wait for 200 us;
       tready <= '0';
-      wait for 200 us;  
+      wait for 20 us;  
   end process;
 
   clock : process begin
