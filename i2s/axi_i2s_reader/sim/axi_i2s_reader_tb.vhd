@@ -15,13 +15,19 @@ architecture arc of axi_i2s_reader_tb is
 
 begin
 
-  tready <= '1';
 
   axi_i2s_reader : entity work.i2s_reader port map (
       resetn=>resetn, clk=>clk,
       mclk=>mclk, sclk=>sclk, lrck=>lrck, din=>din,
       tvalid=>tvalid, tready=>tready,
       tdata=>tdata);
+
+  ready_p : process begin
+      tready <= '1';
+      wait for 200 us;
+      tready <= '0';
+      wait for 20 us;  
+  end process;
 
   clock : process begin
       clk <= '0';
