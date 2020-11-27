@@ -8,7 +8,7 @@ architecture arc of axi_i2s_reader_tb is
 
   signal resetn, clk : std_logic;
   signal mclk, sclk, lrck, din : std_logic;
-  signal tvalid, tready, tlast : std_logic;
+  signal tvalid, tready : std_logic;
   signal tdata : std_logic_vector(15 downto 0);
 
   constant clock_t : time :=  44.288941 ns;
@@ -19,14 +19,14 @@ begin
   axi_i2s_reader : entity work.i2s_reader port map (
       resetn=>resetn, clk=>clk,
       mclk=>mclk, sclk=>sclk, lrck=>lrck, din=>din,
-      tvalid=>tvalid, tready=>tready, tlast=>tlast,
+      tvalid=>tvalid, tready=>tready,
       tdata=>tdata);
 
   ready_p : process begin
       tready <= '1';
       wait for 200 us;
       tready <= '0';
-      wait for 20 us;
+      wait for 20 us;  
   end process;
 
   clock : process begin
