@@ -1,0 +1,1 @@
+../../axi_i2s_reader/synth/axi_i2s_reader.vhd

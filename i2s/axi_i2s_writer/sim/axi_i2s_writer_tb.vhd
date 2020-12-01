@@ -9,7 +9,8 @@ architecture arc of axi_i2s_writer_tb is
   signal resetn, clk            : std_logic;
   signal mclk, sclk, lrck       : std_logic;
   signal tvalid, tready, tlast  : std_logic;
-  signal tdata, dout            : std_logic_vector(15 downto 0);
+  signal dout                   : std_logic;
+  signal tdata                  : std_logic_vector(15 downto 0);
 
   constant clock_t  : time :=  44.288941 ns;
   signal compteur   : integer;

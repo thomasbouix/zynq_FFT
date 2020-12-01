@@ -25,8 +25,7 @@ entity i2s_writer is
 		mclk	:	out		std_logic;		-- clock du systeme ==> fréquence d'échantillonage
 		sclk	:	out 	std_logic;		-- bit clock : frequence des bits de DIN
 		lrck	:	out 	std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
-                                -- entrée du PMOD
-		dout	:	out 	std_logic_vector((DATA_LENGTH-1) downto 0)
+		dout	:	out 	std_logic			-- entrée du PMOD
 	);
 end entity i2s_writer;
 
@@ -38,6 +37,10 @@ architecture arc_i2s_writer of i2s_writer is
 
     signal reg_sclk		:	std_logic;
     signal reg_lrck		:	std_logic;
+
+		signal reg_tdata  : std_logic_vector((DATA_LENGTH-1) downto 0);
+
+		signal cpt_data		: integer;
 
 begin
 
@@ -64,14 +67,24 @@ begin
   data_p : process(clk, resetn) begin
 
     if (resetn = '0') then
-        reg_tready <= '0';
-        dout <= (others => '0');
+        	reg_tready <= '0';
+        	dout 			 <= '0';
     else
-        reg_tready <= '1';
-
-        if (reg_tready = '1') and (tvalid = '1') then
-            dout <= tdata;
-        else end if;
+					-- debut transfert
+	        if (reg_tready = '1') and (tvalid = '1') then
+							reg_tdata <= tdata;
+							cpt_data  <= 0;
+							reg_tready <= '0';
+					-- transfert en cours
+					elsif (cpt_data >= 0 and cpt_data <= 15) then
+							dout 			<= reg_tdata(cpt_data);
+							cpt_data 	<= cpt_data + 1;
+					-- aucun transfert en cours
+					else
+							reg_tready <= '1';
+							cpt_data <= 0;
+							dout <= '0';
+						end if;
     end if;
 
   end process;
