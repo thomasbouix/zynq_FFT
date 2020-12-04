@@ -13,10 +13,10 @@ entity i2s_loop is
       clk    : in std_logic;
 
       -- PMOD OUT : entrée de l'i2s reader
-      mclko  : in std_logic;
-      sclko  : in std_logic;
-      lrcko  : in std_logic;
-      din    : in std_logic;
+      mclko  : out std_logic;
+      sclko  : out std_logic;
+      lrcko  : out std_logic;
+      din    : in  std_logic;
 
       -- PMOD IN : sortie de l'i2s writer
       mclki  : out std_logic;

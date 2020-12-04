@@ -64,26 +64,28 @@ begin
 	lrck <= reg_lrck;
 
   -- generation dout, tready
-  data_p : process(clk, resetn) begin
+  data_p : process(reg_sclk, resetn) begin
 
     if (resetn = '0') then
         	reg_tready <= '0';
         	dout 			 <= '0';
     else
-					-- debut transfert
-	        if (reg_tready = '1') and (tvalid = '1') then
-							reg_tdata <= tdata;
-							cpt_data  <= 0;
-							reg_tready <= '0';
-					-- transfert en cours
-					elsif (cpt_data >= 0 and cpt_data <= 15) then
-							dout 			<= reg_tdata(cpt_data);
-							cpt_data 	<= cpt_data + 1;
-					-- aucun transfert en cours
-					else
-							reg_tready <= '1';
-							cpt_data <= 0;
-							dout <= '0';
+					if rising_edge(reg_sclk) then
+									-- debut transfert
+					        if (reg_tready = '1') and (tvalid = '1') then
+											reg_tdata <= tdata;
+											cpt_data  <= 0;
+											reg_tready <= '0';
+									-- transfert en cours
+									elsif (cpt_data >= 0 and cpt_data <= 15) then
+											dout 			<= reg_tdata(cpt_data);
+											cpt_data 	<= cpt_data + 1;
+									-- aucun transfert en cours
+									else
+											reg_tready <= '1';
+											cpt_data <= 0;
+											dout <= '0';
+									end if;
 						end if;
     end if;
 

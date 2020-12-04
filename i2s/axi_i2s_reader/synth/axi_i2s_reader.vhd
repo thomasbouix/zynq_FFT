@@ -104,32 +104,35 @@ begin
 					reg_tvalid 	<= '0';
 					tlast_carry <= '0';
 					cpt_tlast		<= (others => '0');
-					tvalid 			<= '0';
 					tdata	 			<= (others => '0');
 					tlast  			<= '0';
 
-			else
-					-- nouvelle donnée disponible
-					if (count_data = DATA_LENGTH) then
-							reg_tvalid <= '1';
-					else end if;
+			elsif rising_edge(reg_sclk) then
+							-- nouvelle donnée disponible
+							if (count_data = DATA_LENGTH) then
+									reg_tvalid <= '1';
+							else end if;
 
-					-- envoie des données
-					if (tready = '1' and reg_tvalid = '1') then
-							tdata 			<= data_ready;
-							reg_tvalid 	<= '0';
-							tlast_carry <= cpt_tlast(10);
-							cpt_tlast 	<= cpt_tlast + 1;
-					else end if;
+							-- envoie des données
+							-- on ne rentre pas ici car tready ne vaut pas '1' au rising edge
+							-- ==> non synchrone !
+							if (tready = '1' and reg_tvalid = '1') then
+									tdata 			<= data_ready;
+									reg_tvalid 	<= '0';
+									tlast_carry <= cpt_tlast(10);
+									cpt_tlast 	<= cpt_tlast + 1;
+							else end if;
 
-					-- génération de tlast (1 tous les 2048 envois)
-					-- falling edge cpt_tlast(10)
-					if (tlast_carry = '1') and (cpt_tlast(10) = '0') then
-							tlast <= '1';
-					else
-							tlast <= '0';
-					end if;
-			end if;
+							-- génération de tlast (1 tous les 2048 envois)
+							-- falling edge cpt_tlast(10)
+							if (tlast_carry = '1') and (cpt_tlast(10) = '0') then
+									tlast <= '1';
+							else
+									tlast <= '0';
+							end if;
+		end if;
 	end process axi_p;
+
+	tvalid <= reg_tvalid;
 
 end architecture arc_i2s_reader;
