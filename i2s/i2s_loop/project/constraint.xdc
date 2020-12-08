@@ -10,8 +10,8 @@ set_property IOSTANDARD LVCMOS33    [get_ports { clk_in1_0 }];
 # lrck8   => JA8  => AB10
 # sclk9   => JA9  => AB9
 # sdout10 => JA10 => AA8
-# GND11   => JA11 =>
-# VCC12   => JA12 =>
+# GND11   => JA11 => /
+# VCC12   => JA12 => /
 
 set_property PACKAGE_PIN AB11       [get_ports { mclko_0 }];    
 set_property IOSTANDARD LVCMOS33    [get_ports { mclko_0 }]; 
@@ -27,8 +27,8 @@ set_property IOSTANDARD LVCMOS33    [get_ports { dout_0 }];
 # lrck2 => JA2 => AA11
 # sclk3 => JA3 => Y10
 # sdin4 => JA4 => AA9
-# GND5  => JA5 => 
-# VCC6  => JA6 => 
+# GND5  => JA5 => /
+# VCC6  => JA6 => /
 
 set_property PACKAGE_PIN Y11       [get_ports { mclki_0 }];    
 set_property IOSTANDARD LVCMOS33   [get_ports { mclki_0 }]; 
