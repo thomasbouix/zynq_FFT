@@ -16,7 +16,7 @@ architecture arc of axi_i2s_reader_tb is
 begin
 
 
-  axi_i2s_reader : entity work.i2s_reader port map (
+  axi_i2s_reader : entity work.axi_i2s_reader port map (
       resetn=>resetn, clk=>clk,
       mclk=>mclk, sclk=>sclk, lrck=>lrck, din=>din,
       tvalid=>tvalid, tready=>tready, tlast=>tlast,
