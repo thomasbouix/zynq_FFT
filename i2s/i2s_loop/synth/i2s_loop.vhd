@@ -34,7 +34,7 @@ architecture arch of i2s_loop is
 
 begin
 
-    i2s_reader : entity work.i2s_reader
+    i2s_reader : entity work.axi_i2s_reader
     generic map (
         DATA_LENGTH=>DATA_LENGTH
     )
@@ -45,7 +45,7 @@ begin
         tdata=>tdata
     );
 
-    i2s_writer : entity work.i2s_writer
+    i2s_writer : entity work.axi_i2s_writer
     generic map (
         DATA_LENGTH=>DATA_LENGTH
     )

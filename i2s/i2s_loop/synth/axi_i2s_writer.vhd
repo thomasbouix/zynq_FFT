@@ -1,96 +1,94 @@
--- reçoit les données via AXI par i2s_reader
--- les ecrits sur le PMOD via i2s
+-- mclk/sclk = 4
+-- mclk/lrck = 64
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity i2s_writer is
-	generic(
-		DATA_LENGTH	:	INTEGER	:= 16	-- taille des données envoyés par i2s_writer
-	);
+entity axi_i2s_writer is
+
+  generic(
+    DATA_LENGTH : INTEGER := 16
+  );
+
 	port(
-		-- SYSTEM
-		resetn	:	in	std_logic;		-- RESET ACTIVE LOW
-		clk			:	in	std_logic;
+    -- SYSTEM
+		resetn  :	in	std_logic;
+		clk	    :	in	std_logic;
 
-		-- AXI
-		tvalid	: in   std_logic;  	-- master prêt à transmettre
-		tlast		: in   std_logic;		-- 1 après 2048 transferts => 4096 octets == 1 page
-                                -- sortie sur 2 octets envoyé quand (READY&VALID)
-		tdata		:	in	 std_logic_vector((DATA_LENGTH-1) downto 0);
-    tready	: out  std_logic;		-- slave prêt à recevoir
+    -- AXI
+		tvalid	: in  std_logic;
+    tlast		: in  std_logic;
+		tdata		:	in  std_logic_vector((DATA_LENGTH-1) downto 0);
+    tready	: out std_logic;
 
-		-- I2S
-		mclk	:	out		std_logic;		-- clock du systeme ==> fréquence d'échantillonage
-		sclk	:	out 	std_logic;		-- bit clock : frequence des bits de DIN
-		lrck	:	out 	std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
-		dout	:	out 	std_logic			-- entrée du PMOD
+    -- I2S
+		mclk    :	out	std_logic;
+		sclk	  :	out std_logic;
+		lrck	  :	out std_logic;
+		dout    :	out std_logic
 	);
-end entity i2s_writer;
+end entity axi_i2s_writer;
 
-architecture arc_i2s_writer of i2s_writer is
+architecture arch of axi_i2s_writer is
 
-    signal reg_tready : std_logic;
-    signal cpt_sclk		:	unsigned(1 downto 0);		-- divise par 4 mclk
-    signal cpt_lrck		:	unsigned(5 downto 0);		-- divise par 64 mclk
-
-    signal reg_sclk		:	std_logic;
-    signal reg_lrck		:	std_logic;
-
-		signal reg_tdata  : std_logic_vector((DATA_LENGTH-1) downto 0);
-
-		signal cpt_data		: integer;
+  signal cpt_clk		:	unsigned (5 downto 0);
+  signal sclk_old   : std_logic;
+  signal sclk_cur   : std_logic;
+  signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
+  signal cpt_dout   : integer;  -- compte les bits ecrits sur dout
+  signal reg_tready : std_logic;
 
 begin
 
-	-- Generation des clocks i2s SCLK, LRCK
-	i2s_p : process(clk, resetn) begin
-			if(resetn = '0') then
-						cpt_sclk  <= (others => '0');
-						cpt_lrck 	<= (others => '0');
-						reg_sclk	<= '0';
-						reg_lrck	<= '0';
-			elsif rising_edge(clk) then
-						cpt_lrck <= cpt_lrck + 1;
-						cpt_sclk <= cpt_sclk + 1;
-						reg_sclk <= cpt_sclk(1);
-						reg_lrck <= cpt_lrck(5);
-			end if;
-	end process i2s_p;
+  process(clk, resetn) is
 
-	mclk <= clk;
-	sclk <= reg_sclk;
-	lrck <= reg_lrck;
-
-  -- generation dout, tready
-  data_p : process(reg_sclk, resetn) begin
+    begin
 
     if (resetn = '0') then
-        	reg_tready <= '0';
-        	dout 			 <= '0';
-    else
-					if rising_edge(reg_sclk) then
-									-- debut transfert
-					        if (reg_tready = '1') and (tvalid = '1') then
-											reg_tdata <= tdata;
-											cpt_data  <= 0;
-											reg_tready <= '0';
-									-- transfert en cours
-									elsif (cpt_data >= 0 and cpt_data <= 15) then
-											dout 			<= reg_tdata(cpt_data);
-											cpt_data 	<= cpt_data + 1;
-									-- aucun transfert en cours
-									else
-											reg_tready <= '1';
-											cpt_data <= 0;
-											dout <= '0';
-									end if;
-						end if;
+      cpt_clk    <= (others => '0');
+      sclk_old   <= '0';
+      sclk_cur   <= '0';
+      reg_dec    <= (others => '0');
+      cpt_dout   <= 0;
+      reg_tready <= '0';
+
+    elsif (rising_edge(clk)) then
+      cpt_clk  <= cpt_clk + 1;
+      sclk_old <= sclk_cur;
+      sclk_cur <= cpt_clk(1);
+
+      if (reg_tready = '1') then
+        reg_tready <= '0';
+      else end if;
+
+      -- detection front montant sclk
+      if (sclk_old = '0' and sclk_cur = '1') then
+        -- nouvelle donnée
+        if (cpt_dout = 0) then
+          reg_dec    <= tdata;
+          reg_tready <= '0';
+          cpt_dout   <= 1;
+        -- lecture 1 ; 14
+        elsif (cpt_dout < DATA_LENGTH - 1) then
+          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+          cpt_dout   <= cpt_dout + 1;
+          reg_tready <= '0';
+        -- dernière lecture (cpt_data = 15)
+        else
+          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+          cpt_dout   <= 0;
+          reg_tready <= '1';
+        end if;
+      else end if;
     end if;
 
   end process;
 
+  mclk   <= clk;
+  sclk   <= cpt_clk(1);
+  lrck   <= cpt_clk(5);
   tready <= reg_tready;
+  dout   <= reg_dec(reg_dec'length - 1);
 
-end architecture arc_i2s_writer;
+end architecture arch;

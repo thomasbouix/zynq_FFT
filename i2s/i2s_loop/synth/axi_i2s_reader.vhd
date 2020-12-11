@@ -1,138 +1,107 @@
 -- I2S Reader en mode esclave + receiver
--- mclk/sclk = 4 (cf M.BRESSON)
+-- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits en sortie
+
+-- mclk/sclk = 4
 -- mclk/lrck = 64
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity i2s_reader is
-	generic(
-		DATA_LENGTH	:	INTEGER	:= 16	-- taille des données du PMOD
-	);
+entity axi_i2s_reader is
+
+  generic(
+    DATA_LENGTH : INTEGER := 16
+  );
+
 	port(
-		-- SYSTEM
-		resetn	:	in	std_logic;		-- RESET ACTIVE LOW
-		clk			:	in	std_logic;
+		resetn  :	in	std_logic;		-- fourni par le systeme
+		clk	    :	in	std_logic;		-- fourni par le systeme
+		data	  :	out	std_logic_vector((DATA_LENGTH-1) downto 0);
 
-		-- AXI
-		tready	: in  std_logic;		-- slave prêt à recevoir
-		tvalid	: out std_logic;  	-- master prêt à transmettre
-		tlast		: out std_logic;		-- 1 après 2048 transferts => 4096 octets == 1 page
-		tdata		:	out	std_logic_vector((DATA_LENGTH-1) downto 0);	-- sortie sur 2 octets envoyé quand (READY&VALID)
+    -- AXI
+		tready	: in  std_logic;   -- on ignore ici
+		tvalid	: out std_logic;   -- 1 quand on update une donnée, 0 sinon
+		tlast		: out std_logic;   -- 1 tous les 2048 envois
+		tdata		:	out	std_logic_vector((DATA_LENGTH-1) downto 0);
 
-		-- I2S
-		mclk	:	out		std_logic;		-- clock du systeme ==> fréquence d'échantillonage
-		sclk	:	out 	std_logic;		-- bit clock : frequence des bits de DIN
-		lrck	:	out 	std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
-		din		:	in 		std_logic			-- sortie du PMOD
+		mclk    :	out	std_logic;		-- clock du systeme
+		sclk	  :	out std_logic;		-- bit clock : frequence de din
+		lrck	  :	out std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
+		din	    :	in 	std_logic		  -- sortie de l'ADC
 	);
-end entity i2s_reader;
+end entity axi_i2s_reader;
 
-architecture arc_i2s_reader of i2s_reader is
+architecture arch of axi_i2s_reader is
 
-	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);	-- construction en continue
-	signal data_ready	: std_logic_vector((DATA_LENGTH-1) downto 0);	-- sauvegarde le dernier data construit
-	signal count_data	: integer; 																		-- range 0 to DATA_LENGTH + 1;
-
-	signal cpt_sclk		:	unsigned(1 downto 0);		-- divise par 4 mclk
-	signal cpt_lrck		:	unsigned(5 downto 0);		-- divise par 64 mclk
-
-	signal reg_sclk		:	std_logic;
-	signal reg_lrck		:	std_logic;
-
-	signal reg_tvalid : std_logic;
-	signal cpt_tlast	: unsigned(10 downto 0);
-	signal tlast_carry: std_logic;							-- cpt_tlast(10) à sclk - 1
+  signal cpt_clk		:	unsigned (5 downto 0);
+  signal cpt_din    : integer;  -- nombre de din reçu
+  signal cpt_data   : integer;  -- nombre de données envoyées
+  signal sclk_old   : std_logic;
+  signal sclk_cur   : std_logic;
+  signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
+  signal reg_tvalid : std_logic;
 
 begin
 
-	-- Generation des clocks i2s SCLK, LRCK
-	i2s_p : process(clk, resetn) begin
-			if(resetn = '0') then
-						cpt_sclk  <= (others => '0');
-						cpt_lrck 	<= (others => '0');
-						reg_sclk	<= '0';
-						reg_lrck	<= '0';
-			elsif rising_edge(clk) then
-						cpt_lrck <= cpt_lrck + 1;
-						cpt_sclk <= cpt_sclk + 1;
-						reg_sclk <= cpt_sclk(1);
-						reg_lrck <= cpt_lrck(5);
-			end if;
-	end process i2s_p;
+  process(clk, resetn) is
 
-	mclk <= clk;
-	sclk <= reg_sclk;
-	lrck <= reg_lrck;
+    begin
 
-	-- Gestion des donnees : construction reg_data en continue
-	-- actualisation de data_ready quand une donnée est prête
-	data_p : process (resetn, reg_sclk) begin
-			if (resetn = '0') then
-					count_data 	<= 0;
-					reg_data 		<= (others => '0');		-- construction en continue
-					data_ready	<= (others => '0');		-- sauvegarde d'une donnée complète
+    if (resetn = '0') then
+      cpt_clk    <= (others => '0');
+      cpt_din    <= 0;
+      cpt_data   <= 0;
+      sclk_old   <= '0';
+      sclk_cur   <= '0';
 
-			-- on n'écoute qu'une seule voix stereo
-			elsif rising_edge(reg_sclk) then
+      reg_dec    <= (others => '0');
+      reg_tvalid <= '0';
+      tdata      <= (others => '0');
+      tlast      <= '0';
 
-					-- on laisse un bit de décalage au début
-						if (count_data = 0) then
-								-- ecriture de din[1:16] (din[0:15] décalé de 1)
-								count_data <= 1;
-						elsif ((count_data > 0) and (count_data < DATA_LENGTH + 1)) then
-								reg_data(count_data - 1) <= din;
-								count_data <= count_data + 1;
-								-- donnée prête
-								if ( count_data = DATA_LENGTH ) then
-										data_ready <= reg_data;
-								else end if;
-						else
-									count_data 	<= 0;
-									reg_data 		<= (others => '0');
-						end if;
-			end if;
-	end process data_p;
+    elsif (rising_edge(clk)) then
+      cpt_clk  <= cpt_clk + 1;
+      sclk_old <= sclk_cur;
+      sclk_cur <= cpt_clk(1);
 
-	-- actualisation des signaux AXI
-		-- tvalid
-		-- tlast
-		-- tdata
-	axi_p : process(resetn, reg_sclk) begin
-			if (resetn = '0') then
-					reg_tvalid 	<= '0';
-					tlast_carry <= '0';
-					cpt_tlast		<= (others => '0');
-					tdata	 			<= (others => '0');
-					tlast  			<= '0';
+      if (reg_tvalid = '1') then
+        reg_tvalid <= '0';
+      else end if;
 
-			elsif rising_edge(reg_sclk) then
-							-- nouvelle donnée disponible
-							if (count_data = DATA_LENGTH) then
-									reg_tvalid <= '1';
-							else end if;
+      -- detection front montant sclk
+      if (sclk_old = '0' and sclk_cur = '1') then
 
-							-- envoie des données
-							-- on ne rentre pas ici car tready ne vaut pas '1' au rising edge
-							-- ==> non synchrone !
-							if (tready = '1' and reg_tvalid = '1') then
-									tdata 			<= data_ready;
-									reg_tvalid 	<= '0';
-									tlast_carry <= cpt_tlast(10);
-									cpt_tlast 	<= cpt_tlast + 1;
-							else end if;
+        cpt_din <= cpt_din + 1;
 
-							-- génération de tlast (1 tous les 2048 envois)
-							-- falling edge cpt_tlast(10)
-							if (tlast_carry = '1') and (cpt_tlast(10) = '0') then
-									tlast <= '1';
-							else
-									tlast <= '0';
-							end if;
-		end if;
-	end process axi_p;
+        if (cpt_din >= 1 and cpt_din <= DATA_LENGTH) then
+          -- on remplit de droite à gauche
+          reg_dec <= reg_dec(reg_dec'length-2 downto 0) & din;
 
-	tvalid <= reg_tvalid;
+        -- donnée prête
+        elsif (cpt_din >= DATA_LENGTH + 1) then
+          cpt_din <= 0;
+          tdata   <= reg_dec;
+          reg_tvalid  <= '1';
+          reg_dec <= (others => '0');
 
-end architecture arc_i2s_reader;
+          if (cpt_data < 2048) then
+            cpt_data <= cpt_data + 1;
+            tlast <= '0';
+          elsif (cpt_data >= 2048) then
+            cpt_data <= 0;
+            tlast <= '1';
+          else end if;
+
+        else end if;
+      else end if;
+    end if;
+
+  end process;
+
+  mclk   <= clk;
+  sclk   <= cpt_clk(1);
+  lrck   <= cpt_clk(5);
+  tvalid <= reg_tvalid;
+
+end architecture arch;
