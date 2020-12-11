@@ -13,8 +13,8 @@ entity axi_i2s_writer is
 
 	port(
     -- SYSTEM
-		resetn  :	in	std_logic;		-- fourni par le systeme
-		clk	    :	in	std_logic;		-- fourni par le systeme
+		resetn  :	in	std_logic;
+		clk	    :	in	std_logic;
 
     -- AXI
 		tvalid	: in  std_logic;
@@ -37,6 +37,7 @@ architecture arch of axi_i2s_writer is
   signal sclk_cur   : std_logic;
   signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
   signal cpt_dout   : integer;  -- compte les bits ecrits sur dout
+  signal reg_tready : std_logic;
 
 begin
 
@@ -45,35 +46,39 @@ begin
     begin
 
     if (resetn = '0') then
-      cpt_clk  <= (others => '0');
-      sclk_old <= '0';
-      sclk_cur <= '0';
-      reg_dec  <= (others => '0');
-      cpt_dout <= 0;
-      tready   <= '0';
+      cpt_clk    <= (others => '0');
+      sclk_old   <= '0';
+      sclk_cur   <= '0';
+      reg_dec    <= (others => '0');
+      cpt_dout   <= 0;
+      reg_tready <= '0';
 
     elsif (rising_edge(clk)) then
       cpt_clk  <= cpt_clk + 1;
       sclk_old <= sclk_cur;
       sclk_cur <= cpt_clk(1);
 
+      if (reg_tready = '1') then
+        reg_tready <= '0';
+      else end if;
+
       -- detection front montant sclk
       if (sclk_old = '0' and sclk_cur = '1') then
         -- nouvelle donnée
         if (cpt_dout = 0) then
-          reg_dec  <= tdata;
-          tready   <= '0';
-          cpt_dout <= 1;
+          reg_dec    <= tdata;
+          reg_tready <= '0';
+          cpt_dout   <= 1;
         -- lecture 1 ; 14
         elsif (cpt_dout < DATA_LENGTH - 1) then
-          reg_dec  <= reg_dec(reg_dec'length-2 downto 0) & '0'
-          cpt_dout <= cpt_dout + 1;
-          tready   <= '0';
+          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+          cpt_dout   <= cpt_dout + 1;
+          reg_tready <= '0';
         -- dernière lecture (cpt_data = 15)
         else
-          reg_dec  <= reg_dec(reg_dec'length-2 downto 0) & '0'
-          cpt_data <= 0;
-          tready   <= '0';
+          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+          cpt_dout   <= 0;
+          reg_tready <= '1';
         end if;
       else end if;
     end if;
@@ -83,7 +88,7 @@ begin
   mclk   <= clk;
   sclk   <= cpt_clk(1);
   lrck   <= cpt_clk(5);
-
-  dout <= reg_dec(reg_dec'length - 1);
+  tready <= reg_tready;
+  dout   <= reg_dec(reg_dec'length - 1);
 
 end architecture arch;

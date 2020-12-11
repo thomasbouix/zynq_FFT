@@ -17,7 +17,7 @@ architecture arc of axi_i2s_writer_tb is
 
 begin
 
-  axi_i2s_writer : entity work.i2s_writer port map (
+  axi_i2s_writer : entity work.axi_i2s_writer port map (
       resetn=>resetn, clk=>clk,
       mclk=>mclk, sclk=>sclk, lrck=>lrck, dout=>dout,
       tvalid=>tvalid, tready=>tready, tlast=>tlast,
