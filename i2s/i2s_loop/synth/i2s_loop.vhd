@@ -56,4 +56,4 @@ begin
         tdata=>tdata
     );
 
-end architecture;
+end architecture; 

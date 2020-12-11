@@ -72,6 +72,7 @@ begin
       -- detection front montant sclk
       if (sclk_old = '0' and sclk_cur = '1') then
 
+        -- on attend un coup de clock avant MSB
         cpt_din <= cpt_din + 1;
 
         if (cpt_din >= 1 and cpt_din <= DATA_LENGTH) then
@@ -80,19 +81,18 @@ begin
 
         -- donnée prête
         elsif (cpt_din >= DATA_LENGTH + 1) then
-          cpt_din <= 0;
-          tdata   <= reg_dec;
-          reg_tvalid  <= '1';
-          reg_dec <= (others => '0');
+          cpt_din    <= 0;
+          tdata      <= reg_dec;
+          reg_tvalid <= '1';
+          reg_dec    <= (others => '0');
 
           if (cpt_data < 2048) then
             cpt_data <= cpt_data + 1;
-            tlast <= '0';
+            tlast    <= '0';
           elsif (cpt_data >= 2048) then
             cpt_data <= 0;
-            tlast <= '1';
+            tlast    <= '1';
           else end if;
-
         else end if;
       else end if;
     end if;
