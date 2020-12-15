@@ -53,7 +53,7 @@ begin
         resetn=>resetn, clk=>clk,
         mclk=>mclki, sclk=>sclki, lrck=>lrcki, dout=>dout,
         tvalid=>tvalid, tready=>tready, tlast=>tlast,
-        tdata=>tdata
+        tdata=>tdata  
     );
 
-end architecture; 
+end architecture;

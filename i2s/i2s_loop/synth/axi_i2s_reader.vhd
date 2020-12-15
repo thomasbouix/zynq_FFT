@@ -2,7 +2,7 @@
 -- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits en sortie
 
 -- mclk/sclk = 4
--- mclk/lrck = 64
+-- mclk/lrck = 256
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -34,7 +34,7 @@ end entity axi_i2s_reader;
 
 architecture arch of axi_i2s_reader is
 
-  signal cpt_clk		:	unsigned (5 downto 0);
+  signal cpt_clk		:	unsigned (7 downto 0);
   signal cpt_din    : integer;  -- nombre de din reçu
   signal cpt_data   : integer;  -- nombre de données envoyées
   signal sclk_old   : std_logic;
@@ -101,7 +101,7 @@ begin
 
   mclk   <= clk;
   sclk   <= cpt_clk(1);
-  lrck   <= cpt_clk(5);
+  lrck   <= cpt_clk(7);
   tvalid <= reg_tvalid;
 
 end architecture arch;

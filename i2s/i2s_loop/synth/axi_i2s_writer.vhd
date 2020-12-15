@@ -32,7 +32,7 @@ end entity axi_i2s_writer;
 
 architecture arch of axi_i2s_writer is
 
-  signal cpt_clk		:	unsigned (5 downto 0);
+  signal cpt_clk		:	unsigned (6 downto 0);
   signal sclk_old   : std_logic;
   signal sclk_cur   : std_logic;
   signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
@@ -87,7 +87,7 @@ begin
 
   mclk   <= clk;
   sclk   <= cpt_clk(1);
-  lrck   <= cpt_clk(5);
+  lrck   <= cpt_clk(6);
   tready <= reg_tready;
   dout   <= reg_dec(reg_dec'length - 1);
 
