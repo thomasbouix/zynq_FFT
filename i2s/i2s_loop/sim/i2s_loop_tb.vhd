@@ -13,6 +13,7 @@ architecture arch of i2s_loop_tb is
   signal clk, resetn               : std_logic;
   signal mclki, sclki, lrcki, din  : std_logic;
   signal mclko, sclko, lrcko, dout : std_logic;
+  signal cpt : integer := 0;
 
 begin
 
@@ -37,14 +38,22 @@ begin
       wait;
   end process;
 
-  data_p : process(resetn, sclki) begin
-    if rising_edge(resetn) then
-        din <= '1';
-    else
-        if rising_edge(sclki) then
-          din <= not(din);
-        end if;
-    end if;
-  end process;
+  data_p : process(resetn, sclki)
+  begin
+
+      if rising_edge(sclki) then
+          if (cpt = 0) then
+            din <= '1';
+            cpt <= cpt + 1;
+          elsif (cpt = 1) then
+            din <= '1';
+            cpt <= cpt + 1;
+          elsif (cpt = 2) then
+            din <= '0';
+            cpt <= 0;
+          else end if;
+      else end if;
+end process;
+
 
 end architecture;

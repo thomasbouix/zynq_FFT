@@ -38,6 +38,7 @@ architecture arch of axi_i2s_writer is
   signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
   signal cpt_dout   : integer;  -- compte les bits ecrits sur dout
   signal reg_tready : std_logic;
+  signal reg_tvalid : std_logic;
 
 begin
 
@@ -52,6 +53,7 @@ begin
       reg_dec    <= (others => '0');
       cpt_dout   <= 0;
       reg_tready <= '0';
+      reg_tvalid <= '0';
 
     elsif (rising_edge(clk)) then
       cpt_clk  <= cpt_clk + 1;
@@ -62,24 +64,28 @@ begin
         reg_tready <= '0';
       else end if;
 
+      if (tvalid = '1') then
+        reg_tvalid <= '1';
+      else end if;
+
       -- detection front montant sclk
       if (sclk_old = '0' and sclk_cur = '1') then
         -- nouvelle donnée
-        if (cpt_dout = 0) then
-          reg_dec    <= tdata;
-          reg_tready <= '0';
-          cpt_dout   <= 1;
-        -- lecture 1 ; 14
-        elsif (cpt_dout < DATA_LENGTH - 1) then
-          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
-          cpt_dout   <= cpt_dout + 1;
-          reg_tready <= '0';
-        -- dernière lecture (cpt_data = 15)
-        else
-          reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
-          cpt_dout   <= 0;
-          reg_tready <= '1';
-        end if;
+          if (reg_tvalid = '1' and cpt_dout = 0) then
+            reg_dec    <= tdata;
+            reg_tready <= '0';
+            cpt_dout   <= 1;
+            reg_tvalid <= '0';
+          -- lecture 1 ; 14
+        elsif (cpt_dout > 0 and cpt_dout < DATA_LENGTH - 1) then
+            reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+            cpt_dout   <= cpt_dout + 1;
+          -- dernière lecture (cpt_data = 15)
+          else
+            reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+            cpt_dout   <= 0;
+            reg_tready <= '1';
+          end if;
       else end if;
     end if;
 
