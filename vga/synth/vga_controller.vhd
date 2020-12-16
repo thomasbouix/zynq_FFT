@@ -6,7 +6,7 @@ entity vga_controller is
 	generic(
 		-- VGA Signal 640 x 480 @ 60 Hz Industry standard timing
 
-		FREQ_CLK	: INTEGER := 25000000;	-- Frequency
+		FREQ_CLK	: INTEGER := 25175000;	-- Frequency
 		DATA_LENGTH	: INTEGER := 4;	-- Data length
 
 		HOR_VA		: INTEGER := 640;	-- Horizontal visible area
@@ -40,21 +40,19 @@ architecture arc_vga_controller of vga_controller is
 
    signal count_h	: integer range 0 to (h_period - 1);
    signal count_v	: integer range 0 to (v_period - 1);
-   --signal reg_hor_sync : std_logic;
-   --signal reg_ver_sync : std_logic;
+   signal va_state	: std_logic;
 
 begin
 
-  process(clk,reset_n)
+  process(clk, reset_n)
   begin
 
-    if reset_n = '1'  then
-		count_v <= 0;
-		count_h <= 0;
-		--reg_hor_sync <= '1';
-		--reg_ver_sync <= '1';
-		hor_sync <= '0';
-		ver_sync <= '0';
+  	if reset_n = '0'  then
+		count_v  <= 0;
+		count_h  <= 0;
+		va_state <= '0';
+		hor_sync <= '1';
+		ver_sync <= '1';
 
  	elsif rising_edge(clk)then
 
@@ -69,26 +67,26 @@ begin
 			count_h <= count_h + 1;
 		end if;
 
-		if (count_h <= (HOR_VA + HOR_FP + HOR_SP)) and (count_h >= (HOR_VA + HOR_FP)) then
-			--reg_hor_sync <= '1';
-			hor_sync <= '1';
-		else
-			--reg_hor_sync <= '0';
+		if ( (count_h > (HOR_FP + HOR_VA)) and (count_h < (HOR_FP + HOR_VA + HOR_SP)) ) then
 			hor_sync <= '0';
+		else
+			hor_sync <= '1';
 		end if;
 
-		if (count_v <= (VER_VA + VER_FP + VER_SP)) and (count_v >= (VER_VA + VER_FP)) then
-			--reg_ver_sync <= '1';
-			ver_sync <= '1';
-		else
-			--reg_ver_sync <= '0';
+		if ( (count_v > (VER_FP + VER_VA)) and (count_v < (VER_FP + VER_VA + VER_SP)) ) then
 			ver_sync <= '0';
+		else
+			ver_sync <= '1';
 		end if;
-    end if;
+		
+		if( (count_h > HOR_FP) and (count_h < (HOR_FP + HOR_VA)) and (count_v > VER_FP) and (count_v < (VER_FP + VER_VA)) ) then
+			va_state <= '1';
+		else
+			va_state <= '0';
+		end if;
+    	end if;
   end process;
 
-  	U0_COLOURS : entity work.colours  port map(reset_n => reset_n,clk => clk,count_v => count_v,count_h => count_h,red => red,green => green, blue => blue);
-	--ver_sync <= reg_ver_sync;
-	--hor_sync <= reg_hor_sync;
+  	U0_COLOURS : entity work.colours port map(reset_n => reset_n, clk => clk, va_state => va_state, red => red,green => green, blue => blue);
 
 end architecture;

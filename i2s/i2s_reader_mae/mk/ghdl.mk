@@ -14,8 +14,7 @@ ghdl_clean:
 
 $(GHDL_TARGETS):%:sim/%.vhd
 	$(GHDL) -i $(SYNTH_FILES) $(SIM_FILES)
-	$(GHDL) -m -Wl,-no-pie $@
+	$(GHDL) -m $@
  
 $(GHDL_SIM_TARGETS):%.vcd:% $(GHDL_TARGETS)
 	./$< --stop-time=$(GHDL_SIM_TIME) --vcd=$<.vcd
-
