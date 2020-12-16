@@ -1,97 +1,111 @@
 -- I2S Reader en mode esclave + receiver
--- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits en sortie
+-- Lit la sortie de l'ADC et la formatte sur DATA_LENGTH bits
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity i2s_reader is 
 	generic(
-		MCLK_FREQ	:	INTEGER := 22579200;	-- mclk/sclk = 8
-		SCLK_FREQ	:	INTEGER := 2822400;	-- sclk/lrck = 64 
-		LRCK_FREQ	:	INTEGER	:= 44100;	-- frequence d'echantillonage 
-		DATA_LENGTH	:	INTEGER	:= 16		-- taille des données de l'ADC
+		DATA_LENGTH	: INTEGER := 16	-- taille des données
 	);
 	port(
-		reset	:	in	std_logic;		-- fourni par le systeme
-		clk	:	in	std_logic;		-- fourni par le systeme
-		data	:	out	std_logic_vector((DATA_LENGTH-1) downto 0);
+		reset_n	: in	std_logic;
+		clk		: in	std_logic;
+		data		: out	std_logic_vector((DATA_LENGTH-1) downto 0);
 		
-		mclk	:	out	std_logic;		-- clock du systeme
-		sclk	:	out 	std_logic;		-- bit clock : frequence de din
-		lrck	:	out 	std_logic;		-- left / right : change tout les (DATA_LENGTH+2) * SCLK
-		din	:	in 	std_logic		-- sortie de l'ADC
+		mclk		: out	std_logic;	-- clock du systeme
+		sclk		: out 	std_logic;	-- frequence din
+		lrclk		: out 	std_logic;	-- left / right
+		din		: in 	std_logic	-- sortie de l'ADC
 	);
 end entity i2s_reader;
 
-architecture arc_i2s_reader of i2s_reader is
-	
-	signal reg_data		:	std_logic_vector((DATA_LENGTH-1) downto 0);
-	signal count_data	: 	integer; --range 0 to DATA_LENGTH + 1;
+architecture arc_i2s_reader of i2s_reader is 
 
-	signal cpt_sclk		:	integer; -- range 0 to (MCLK_FREQ/SCLK_FREQ) - 1;
-	signal cpt_lrck		:	integer; -- range 0 to (MCLK_FREQ/LRCK_FREQ) - 1;
-	
-	signal reg_sclk		:	std_logic;
-	signal reg_lrck		:	std_logic;
+type Etat is (Etat0, Etat1, Etat2, Etat3);
+signal EtatPresent : Etat;
+signal EtatFutur   : Etat;
 
+signal counter		: integer range 0 to DATA_LENGTH; 
+signal counter_clk	: unsigned (7 downto 0);
 
+signal sclk_old	: std_logic;
+signal sclk_cur	: std_logic;
+signal lrclk_old   	: std_logic;
+signal lrclk_cur   	: std_logic;
+
+signal reg_data	: std_logic_vector((DATA_LENGTH - 1) downto 0);
+
+begin 
+
+ -- Process synchrone -- 
+process (clk, reset_n)
 begin
-	-- Generation de SCLK et LRCK
-	clocks : process(clk, reset)
-	begin
-		if(reset = '1') then
-		
-			cpt_sclk  	<= 0;
-			cpt_lrck 	<= 0;
+  	if reset_n = '0' then 
+    		EtatPresent <= Etat0;
+    
+      		counter_clk <= (others => '0');
+  
+    		sclk_old    <= '0';
+    		sclk_cur    <= '0';
+    		lrclk_old   <= '0';
+    		lrclk_cur   <= '0';
+    		
+  	elsif clk'event and clk='1' then 
+    		EtatPresent <= EtatFutur;
+    		
+    		counter_clk <= counter_clk + 1;
+    		
+    		sclk_old    <= sclk_cur;
+      		sclk_cur    <= not(counter_clk(1));
+      		lrclk_old   <= lrclk_cur;
+      		lrclk_cur   <= counter_clk(7);
+    		
+  	end if; 
+end process; 
 
-			reg_sclk	<= '0';
-			reg_lrck	<= '0';
-			
-		elsif rising_edge(clk) then
-				
-			if (cpt_sclk = ((MCLK_FREQ/SCLK_FREQ)-1)) then	-- 7
-				reg_sclk <= not(reg_sclk);
-				cpt_sclk <= 0;
+
+process (EtatPresent, sclk_old, sclk_cur, lrclk_old, lrclk_cur)
+begin
+	case EtatPresent is 
+		when Etat0 =>
+			reg_data <= (others => '0');
+			counter  <= 0;
+			if(lrclk_old = '1' and lrclk_cur = '0') then
+				EtatFutur <= Etat1;
 			else
-				cpt_sclk <= cpt_sclk + 1;
+				EtatFutur <= Etat0;
 			end if;
-			
-			if (cpt_lrck = ((SCLK_FREQ/LRCK_FREQ)-1)) then	-- 63 
-				reg_lrck <= not(reg_lrck);
-				cpt_lrck <= 0;
+		when Etat1 =>
+			if(sclk_old = '0' and sclk_cur = '1') then
+				EtatFutur <= Etat2;
 			else
-				cpt_lrck <= cpt_lrck + 1;
+				EtatFutur <= Etat1;
 			end if;
-		end if;
-	end process clocks;
-
-	-- GESTION DE LA SORTIE DE DONNEES	
-	data_p : process (reset, reg_sclk)
-       	begin
-		if (reset = '1') then 
-			reg_data 	<= (others => '0');
-			count_data 	<= 0;
-			data 		<= (others => '0');
-
-		elsif rising_edge(reg_sclk) then -- on n'écoute qu'une seule voix stereo 
-			
-			if (count_data = 0) then -- on laisse un bit de décalage au début		
-				count_data <= 1; -- ecriture de din[1:16] (din[0:15] décalé de 1)
-
-			elsif (count_data > 0) and (count_data < DATA_LENGTH + 1) then		
-				reg_data(count_data - 1) <= din;
-				count_data <= count_data + 1;
+		when Etat2 =>
+			if(sclk_old = '0' and sclk_cur = '1') then
+				reg_data <= reg_data(reg_data'length-2 downto 0) & din;
+				counter  <= counter + 1;
+			else end if;
+			if( counter = DATA_LENGTH)  then
+				counter <= 0;
+				EtatFutur <= Etat3;
 			else
-				count_data 	<= 0;
-				reg_data 	<= (others => '0'); 
-				data 		<= reg_data;
+				EtatFutur <= Etat2;
 			end if;
-		end if;	
-	end process data_p;	
-	
-	mclk <= clk;
-	sclk <= reg_sclk;
-	lrck <= reg_lrck;
+		when Etat3 =>
+			data <= reg_data;
+			if(sclk_old = '0' and sclk_cur = '1') then
+				EtatFutur <= Etat0;
+			else
+				EtatFutur <= Etat3;
+			end if;
+ 	end case;
+end process;
 
+mclk   <= clk;
+sclk   <= sclk_cur;
+lrclk  <= lrclk_cur;
 
-end architecture arc_i2s_reader;
+end arc_i2s_reader;
