@@ -35,11 +35,12 @@ architecture arch of axi_i2s_writer is
 
   signal cpt_clk		:	unsigned (6 downto 0);
   signal sclk_old   : std_logic;
-  signal sclk_cur   : std_logic;
+  -- signal sclk_cur   : std_logic;
+  signal lrck_old   : std_logic;
   signal reg_dec    : std_logic_vector(DATA_LENGTH-1 downto 0);
   signal cpt_dout   : integer;  -- compte les bits ecrits sur dout
   signal reg_tready : std_logic;
-  signal reg_tvalid : std_logic;
+  signal reg_dout   : std_logic;
 
 begin
 
@@ -50,52 +51,54 @@ begin
     if (resetn = '0') then
       cpt_clk    <= (others => '0');
       sclk_old   <= '0';
-      sclk_cur   <= '0';
+      -- sclk_cur   <= '0';
       reg_dec    <= (others => '0');
       cpt_dout   <= 0;
       reg_tready <= '0';
-      reg_tvalid <= '0';
+      lrck_old   <= '0';
+      reg_dout   <= '0';
 
-    elsif (rising_edge(clk)) then
+    elsif (falling_edge(clk)) then
       cpt_clk  <= cpt_clk + 1;
-      sclk_old <= sclk_cur;
-      sclk_cur <= cpt_clk(1);
+      -- sclk_old <= sclk_cur;
+      sclk_old <= not(cpt_clk(1));  -- un clk de retard
+      lrck_old <= cpt_clk(6);       -- un clk de retard
 
+      -- on ne laisse tready que un coup de clk
       if (reg_tready = '1') then
-        reg_tready <= '0';
-      else end if;
-
-      if (tvalid = '1') then
-        reg_tvalid <= '1';
-      else end if;
-
-      -- detection front montant sclk
-      if (sclk_old = '0' and sclk_cur = '1') then
-        -- nouvelle donnée
-          if (reg_tvalid = '1' and cpt_dout = 0) then
-            reg_dec    <= tdata;
             reg_tready <= '0';
-            cpt_dout   <= 1;
-            reg_tvalid <= '0';
-          -- lecture 1 ; 14
-        elsif (cpt_dout > 0 and cpt_dout < DATA_LENGTH - 1) then
-            reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
-            cpt_dout   <= cpt_dout + 1;
-          -- dernière lecture (cpt_data = 15)
-          else
-            reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
-            cpt_dout   <= 0;
-            reg_tready <= '1';
-          end if;
+      else end if;
+
+        -- detection front montant sclk
+      if (sclk_old = '0' and not(cpt_clk(1)) = '1') then
+
+            -- front descendant lrck = ecrire nouvelle donnée PMOD
+            if (lrck_old = '1' and cpt_clk(6) = '0') then
+                  reg_dec    <= tdata;
+                  reg_dout   <= '0'
+                  reg_tready <= '0';
+                  cpt_dout   <= 0;
+            else
+                  cpt_dout <= cpt_dout + 1;
+                  -- ecriture pour cpt_dout=1 jusqu'à cpt_dout=16
+                  if  (cpt_dout > 0 and cpt_dout <= DATA_LENGTH) then
+                      reg_dec    <= reg_dec(reg_dec'length-2 downto 0) & '0';
+                      reg_dout   <= reg_dec(reg_dec'length - 1);
+                  else end if;
+
+                if (cpt_dout = 16) then
+                  reg_tready <= '1';
+                else end if;
+            end if;
       else end if;
     end if;
 
   end process;
 
   mclk   <= clk;
-  sclk   <= cpt_clk(1);
+  sclk   <= not(cpt_clk(1));
   lrck   <= cpt_clk(6);
   tready <= reg_tready;
-  dout   <= reg_dec(reg_dec'length - 1);
+  dout   <= reg_dout;
 
 end architecture arch;
