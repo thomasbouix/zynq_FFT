@@ -1,5 +1,6 @@
 -- mclk/sclk = 4
--- mclk/lrck = 64
+-- mclk/lrck = 128
+-- sclk/lrck = 32
 
 library ieee;
 use ieee.std_logic_1164.all;
