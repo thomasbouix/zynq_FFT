@@ -1,4 +1,3 @@
-
 set_property PACKAGE_PIN R16 [get_ports { reset_rtl }]; 
 set_property IOSTANDARD LVCMOS33 [get_ports { reset_rtl }];
     
@@ -28,7 +27,3 @@ set_property PACKAGE_PIN AB20 [get_ports { blue_0[2] }];
 set_property PACKAGE_PIN Y20  [get_ports { blue_0[1] }];       
 set_property PACKAGE_PIN Y21  [get_ports { blue_0[0] }];       
 set_property IOSTANDARD LVCMOS33 [get_ports { blue_* }];
-
-
-
-
