@@ -1,3 +1,0 @@
-#define MODULE_MAJOR 100
-#define MY_DRIVER_PRINT _IO(MODULE_MAJOR, 0)
-#define _IOW(MODULE_MAJOR, 1, char*)

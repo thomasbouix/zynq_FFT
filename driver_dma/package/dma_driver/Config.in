@@ -1,4 +1,0 @@
-config BR2_PACKAGE_DMA_DRIVER
-	bool "dma_driver"
-	help
-	  my dma driver
