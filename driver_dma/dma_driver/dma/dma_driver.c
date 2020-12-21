@@ -18,30 +18,27 @@ MODULE_DESCRIPTION("exemple de module");
 MODULE_SUPPORTED_DEVICE("none");
 MODULE_LICENSE("GPL");
 
-struct my_dma_device{
+struct my_dma_device {
 	struct cdev cdev;
 	dev_t dt;
 };
 
 static struct class *class = NULL;
 
-static int my_open(struct inode *inode, struct file *file)
-{
-    printk(KERN_DEBUG "open()\n");
-    struct my_dma_device *mdev = container_of(inode->i_cdev, struct my_dma_device, cdev);
+static int my_open(struct inode *inode, struct file *file) {
+	printk(KERN_DEBUG "open()\n");
+	struct my_dma_device *mdev = container_of(inode->i_cdev, struct my_dma_device, cdev);
 	file->private_data = mdev;
-    return 0;
+	return 0;
 }
 
-static int my_release(struct inode *inode, struct file *file)
-{
-    printk(KERN_DEBUG "close()\n");
-    file->private_data = NULL;
-    return 0;
+static int my_release(struct inode *inode, struct file *file) {
+	printk(KERN_DEBUG "close()\n");
+	file->private_data = NULL;
+	return 0;
 }
 
-static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args)
-{
+static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
 	printk(KERN_DEBUG "ioctl()\n");
 	switch(cmd){
 		case MY_DRIVER_PRINT:
@@ -51,8 +48,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args)
 	return 0;
 }
 
-static struct file_operations fops =
-{
+static struct file_operations fops = {
 	.unlocked_ioctl = my_ioctl,
 	.open = my_open,
 	.release = my_release
@@ -133,9 +129,9 @@ static int my_dma_remove(struct platform_device *pdev){
 static const struct of_device_id my_dma_ids[] = { { .compatible = "eise,my_dma"}, {} };
 MODULE_DEVICE_TABLE(of, my_dma_ids);
 
-static struct platform_driver my_dma_pdrv =
-{ .driver = 
-	{ 	.name = DRIVER_NAME,
+static struct platform_driver my_dma_pdrv = { 
+	.driver = {
+		.name = DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = my_dma_ids,
 	},
@@ -143,16 +139,14 @@ static struct platform_driver my_dma_pdrv =
 	.remove = my_dma_remove	
 };
 
-static int __init mon_module_init(void)
-{
+static int __init mon_module_init(void) {
 	printk(KERN_DEBUG "initialisation des drivers\n");
 	class = class_create(THIS_MODULE, "toto");
 	platform_driver_register(&my_dma_pdrv);
 	return 0;
 }
 
-static void __exit mon_module_cleanup(void)
-{
+static void __exit mon_module_cleanup(void) {
 	platform_driver_unregister(&my_dma_pdrv);
 	class_destroy(class);
 	printk(KERN_DEBUG "supression des drivers\n");
