@@ -26,20 +26,20 @@ struct my_dma_device {
 static struct class *class = NULL;
 
 static int my_open(struct inode *inode, struct file *file) {
-	printk(KERN_DEBUG "open()\n");
+	printk(KERN_DEBUG "DMA_DRIVER : open()\n");
 	struct my_dma_device *mdev = container_of(inode->i_cdev, struct my_dma_device, cdev);
 	file->private_data = mdev;
 	return 0;
 }
 
 static int my_release(struct inode *inode, struct file *file) {
-	printk(KERN_DEBUG "close()\n");
+	printk(KERN_DEBUG "DMA_DRIVER : release()\n");
 	file->private_data = NULL;
 	return 0;
 }
 
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
-	printk(KERN_DEBUG "ioctl()\n");
+	printk(KERN_DEBUG "DMA_DRIVER : ioctl()\n");
 	switch(cmd){
 		case MY_DRIVER_PRINT:
 			printk(KERN_DEBUG "PRINT\n");
@@ -56,7 +56,7 @@ static struct file_operations fops = {
 
 static int my_dma_probe(struct platform_device *pdev){
 	
-	printk(KERN_DEBUG "initialisation du driver\n");
+	printk(KERN_DEBUG "DMA_DRIVER : probe()");
 	
 	int ret;
 	struct my_dma_device *mdev;
@@ -105,6 +105,7 @@ static int my_dma_probe(struct platform_device *pdev){
 }
 
 static int my_dma_remove(struct platform_device *pdev){
+	printk(KERN_DEBUG "DMA_DRIVER : remove()\n");
 	struct my_dma_device *mdev;
 	mdev = platform_get_drvdata(pdev);
 
@@ -126,7 +127,11 @@ static int my_dma_remove(struct platform_device *pdev){
 	return 0;
 }
 
-static const struct of_device_id my_dma_ids[] = { { .compatible = "eise,my_dma"}, {} };
+static const struct of_device_id my_dma_ids[] = { 
+	{ .compatible = "eise,my_dma"}, 
+	{} 
+};
+
 MODULE_DEVICE_TABLE(of, my_dma_ids);
 
 static struct platform_driver my_dma_pdrv = { 
@@ -140,16 +145,16 @@ static struct platform_driver my_dma_pdrv = {
 };
 
 static int __init mon_module_init(void) {
-	printk(KERN_DEBUG "initialisation des drivers\n");
+	printk(KERN_DEBUG "DMA_DRIVER : init");
 	class = class_create(THIS_MODULE, "toto");
 	platform_driver_register(&my_dma_pdrv);
 	return 0;
 }
 
 static void __exit mon_module_cleanup(void) {
+	printk(KERN_DEBUG "DMA_DRIVER : exit");
 	platform_driver_unregister(&my_dma_pdrv);
 	class_destroy(class);
-	printk(KERN_DEBUG "supression des drivers\n");
 }
 
 module_init(mon_module_init);
