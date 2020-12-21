@@ -57,7 +57,7 @@ begin
         data    => data,
         mclk    => mclki,
         sclk    => sclki,
-        lrclk   => lrclki, 
+        lrclk   => lrclki,
         dout    => dout
     );
 

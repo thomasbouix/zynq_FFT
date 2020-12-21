@@ -20,7 +20,7 @@ begin
   							clk     => clk,
   							data    => data,
       							mclk    => mclk,
-      							sclk    => sclk, 
+      							sclk    => sclk,
       							lrclk   => lrclk,
       							dout    => dout
       						 );

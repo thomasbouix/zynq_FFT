@@ -17,4 +17,5 @@ $(GHDL_TARGETS):%:sim/%.vhd
 	$(GHDL) -m $@
  
 $(GHDL_SIM_TARGETS):%.vcd:% $(GHDL_TARGETS)
-	./$< --stop-time=$(GHDL_SIM_TIME) --vcd=$<.vcd
+#	./$< --stop-time=$(GHDL_SIM_TIME) --vcd=$<.vcd
+	./$< --stop-time=$(GHDL_SIM_TIME) --wave=$<.ghw
