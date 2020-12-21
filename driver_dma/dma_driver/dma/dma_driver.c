@@ -18,9 +18,11 @@ MODULE_DESCRIPTION("exemple de module");
 MODULE_SUPPORTED_DEVICE("none");
 MODULE_LICENSE("GPL");
 
+// structure instanciée lors d'un probe() : enregistre le device dans le kernel 
+// puis passée dans la struct file lors de open()
 struct my_dma_device {
-	struct cdev cdev;
-	dev_t dt;
+	struct cdev cdev;	// Représente un char device
+	dev_t dt;		// Id du device (major + minor)
 };
 
 static struct class *class = NULL;
@@ -48,15 +50,18 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
 	return 0;
 }
 
+// assigné pour chaque device avec cdev_init()
 static struct file_operations fops = {
 	.unlocked_ioctl = my_ioctl,
 	.open = my_open,
 	.release = my_release
 };
 
+// Un appel à probe() par device détecté dans le DT
 static int my_dma_probe(struct platform_device *pdev){
 	
-	printk(KERN_DEBUG "DMA_DRIVER : probe()");
+	printk(KERN_DEBUG "DMA_DRIVER : probe()\n");
+	printk(KERN_DEBUG "DMA_DRVIER : %s recognized\n", pdev->name);
 	
 	int ret;
 	struct my_dma_device *mdev;
@@ -78,6 +83,7 @@ static int my_dma_probe(struct platform_device *pdev){
 		goto mdev_free;
 	}
 
+	// Créer le fichier spécial
 	printk(KERN_DEBUG "creation dev\n");
 	dev = device_create(class, NULL, mdev->dt, NULL, "my_dma%d", instance_num++);
 	if(!dev){
@@ -85,9 +91,13 @@ static int my_dma_probe(struct platform_device *pdev){
 		ret = -ENOMEM;
 		goto region_free;
 	}
+	
+	// ajout des opérations
+	printk(KERN_DEBUG "DMA_DRIVER : cdev_init()\n");
+	cdev_init(&mdev->cdev, &fops);
 
-	printk(KERN_DEBUG "ajout cdev\n");
-	cdev_init(&mdev->cdev, &fops),
+	// exportation du device dans le kernel
+	printk(KERN_DEBUG "DMA_DRIVER : cdev_add()\n");
 	ret = cdev_add(&mdev->cdev, mdev->dt, 1);
 	if(ret < 0){
 		printk(KERN_DEBUG "cdev_add() failed\n");
@@ -127,13 +137,19 @@ static int my_dma_remove(struct platform_device *pdev){
 	return 0;
 }
 
+// tableau 
 static const struct of_device_id my_dma_ids[] = { 
-	{ .compatible = "eise,my_dma"}, 
-	{} 
+	{.compatible = "xlnx,axi-dma-7.1"},
+	{.compatible = "xlnx,axi-dma-1.00.a"},
+	{}
 };
+
 
 MODULE_DEVICE_TABLE(of, my_dma_ids);
 
+// Initialisation d'une struct pré-existante décrivant le driver
+// probe() + remove() : propres au driver	=> initialisation des devices
+// != open() + release() : propres au device	=> utilisation des devices
 static struct platform_driver my_dma_pdrv = { 
 	.driver = {
 		.name = DRIVER_NAME,
@@ -144,15 +160,18 @@ static struct platform_driver my_dma_pdrv = {
 	.remove = my_dma_remove	
 };
 
+// Chargement du driver 
 static int __init mon_module_init(void) {
-	printk(KERN_DEBUG "DMA_DRIVER : init");
-	class = class_create(THIS_MODULE, "toto");
+	printk(KERN_DEBUG "DMA_DRIVER : init\n");
+	// Créer une classe correspondant à notre module
+	class = class_create(THIS_MODULE, "cdma");
+	// enregistre le driver => rend disponible la fonction probe()
 	platform_driver_register(&my_dma_pdrv);
 	return 0;
 }
 
 static void __exit mon_module_cleanup(void) {
-	printk(KERN_DEBUG "DMA_DRIVER : exit");
+	printk(KERN_DEBUG "DMA_DRIVER : exit\n");
 	platform_driver_unregister(&my_dma_pdrv);
 	class_destroy(class);
 }
