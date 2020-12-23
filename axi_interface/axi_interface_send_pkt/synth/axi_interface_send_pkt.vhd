@@ -35,8 +35,6 @@ constant WAIT_NB_CLOCK : integer := 20;
 signal counter_wait	: integer range 0 to WAIT_NB_CLOCK;
 signal counter_data	: integer range 0 to MAX_PKT_LEN;
 
-
-type NIBBLE is array (3 downto 0) of std_ulogic;
 begin
 
 process(aclk, aresetn)
