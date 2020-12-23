@@ -1,6 +1,5 @@
 // Very inspired by the example "xaxidma_example_simple_poll.c" of Xilinx
 
-
 #include "xaxidma.h"
 #include "xparameters.h"
 #include "xdebug.h"
@@ -32,7 +31,8 @@
 #define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
 #define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
 
-#define MAX_PKT_LEN		0x01
+#define MAX_PKT_LEN		0x20
+
 
 #if (!defined(DEBUG))
 extern void xil_printf(const char *format, ...);
