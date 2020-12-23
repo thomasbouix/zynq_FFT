@@ -1,10 +1,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity axi_interface_test_tb is
-end axi_interface_test_tb;
+entity axi_interface_send_tb is
+end axi_interface_send_tb;
 
-architecture arc_axi_interface_test_tb of axi_interface_test_tb is
+architecture arc_axi_interface_send_tb of axi_interface_send_tb is
 
   signal aresetn, aclk : std_logic;
   signal m_axis_tdata  : std_logic_vector(31 downto 0);
@@ -16,7 +16,7 @@ architecture arc_axi_interface_test_tb of axi_interface_test_tb is
 
 begin 
 
-  axi_interface_test : entity work.axi_interface_test port map (	aresetn       => aresetn,
+  axi_interface_send : entity work.axi_interface_send port map (	aresetn       => aresetn,
 	  								aclk          => aclk,
 	  								m_axis_tdata  => m_axis_tdata,
 	  								m_axis_tlast  => m_axis_tlast,
@@ -46,4 +46,4 @@ begin
       wait;
   end process;
   
-end arc_axi_interface_test_tb;
+end arc_axi_interface_send_tb;

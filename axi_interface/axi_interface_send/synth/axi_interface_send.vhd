@@ -4,7 +4,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity axi_interface_test is
+entity axi_interface_send is
    generic(
       DATA_LENGTH	: INTEGER := 16
    );
@@ -18,9 +18,9 @@ entity axi_interface_test is
       m_axis_tready 	: in    std_logic;
       m_axis_tvalid 	: out   std_logic
    );
-end entity axi_interface_test;
+end entity axi_interface_send;
 
-architecture arc_axi_interface_test of axi_interface_test is
+architecture arc_axi_interface_send of axi_interface_send is
 
 type t_axi_state is (WAITFOR, SEND, AFTER_SEND);
 signal axi_state : t_axi_state;
@@ -83,4 +83,4 @@ begin
 	else end if;
 end process;
 
-end arc_axi_interface_test;
+end arc_axi_interface_send;

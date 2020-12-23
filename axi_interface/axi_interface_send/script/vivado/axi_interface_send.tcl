@@ -1,4 +1,4 @@
-set ip_name "axi_interface_test"
+set ip_name "axi_interface_send"
 
 create_project project_1 . -part xc7z020clg484-1 -force
 set_property ip_repo_paths ip_repo [current_project]
