@@ -139,9 +139,11 @@ static int my_dma_remove(struct platform_device *pdev){
 
 // tableau 
 static const struct of_device_id my_dma_ids[] = { 
-	{.compatible = "xlnx,axi-dma-7.1"},
-	{.compatible = "xlnx,axi-dma-1.00.a"},
-	{}
+	{.compatible = "xlnx,axi-dma-7.1", },
+	{.compatible = "xlnx,axi-dma-1.00.a", },
+	{.compatible = "xlnx,axi-dma-mm2s-channel", },
+	{.compatible = "xlnx,axi-dma-s2mm-channel", },
+	{},
 };
 
 
@@ -178,3 +180,4 @@ static void __exit mon_module_cleanup(void) {
 
 module_init(mon_module_init);
 module_exit(mon_module_cleanup);
+
