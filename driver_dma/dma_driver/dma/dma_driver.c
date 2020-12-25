@@ -21,8 +21,10 @@ MODULE_LICENSE("GPL");
 // structure instanciée lors d'un probe() : enregistre le device dans le kernel 
 // puis passée dans la struct file lors de open()
 struct my_dma_device {
-	struct cdev cdev;	// Représente un char device
-	dev_t dt;		// Id du device (major + minor)
+	struct platform_device *pdev;	// 
+	struct cdev cdev;		// Représente un char device
+	dev_t  dt;			// Id du device (major + minor)
+	void __iomem *registers;	// 
 };
 
 static struct class *class = NULL;
@@ -75,6 +77,10 @@ static int my_dma_probe(struct platform_device *pdev){
 		printk(KERN_DEBUG "kalloc() my_dma_device failed\n");
 		return -ENOMEM;
 	}
+	
+	mdev->pdev = pdev;
+	// fait pointer un champ de pdev vers mdev (alors que pdev est un champ de mdev !)
+	platform_set_drvdata(pdev, mdev);
 
 	printk(KERN_DEBUG "allocation chrdev\n");
 	ret = alloc_chrdev_region(&mdev->dt, 0, 1, "mydriver");
