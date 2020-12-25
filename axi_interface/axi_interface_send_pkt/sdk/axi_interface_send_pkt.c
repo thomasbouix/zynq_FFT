@@ -31,7 +31,7 @@
 #define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
 #define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
 
-#define MAX_PKT_LEN		0x20
+#define MAX_PKT_LEN		0x10
 
 
 #if (!defined(DEBUG))
@@ -43,7 +43,7 @@ int axi_dma_read(void);
 static void print_data(void);
 
 XAxiDma AxiDma;
-u8 *RxBufferPtr;
+u32 *RxBufferPtr;
 
 int main()
 {
@@ -91,22 +91,22 @@ int axi_dma_read_config(u16 DeviceId){
 	XAxiDma_Config *CfgPtr;
 	int Status;
 
-	RxBufferPtr = (u8 *)RX_BUFFER_BASE;
+	RxBufferPtr = (u32 *)RX_BUFFER_BASE;
 
 	CfgPtr = XAxiDma_LookupConfig(DeviceId);
 	if (!CfgPtr) {
-		xil_printf("No config found for %d\r\n", DeviceId);
+		xil_printf("No config found for DMA %d\r\n", DeviceId);
 		return XST_FAILURE;
 	}
 
 	Status = XAxiDma_CfgInitialize(&AxiDma, CfgPtr);
 	if (Status != XST_SUCCESS) {
-		xil_printf("Initialization failed %d\r\n", Status);
+		xil_printf("DMA initialization failed %d\r\n", Status);
 		return XST_FAILURE;
 	}
 
 	if(XAxiDma_HasSg(&AxiDma)){
-		xil_printf("Device configured as SG mode \r\n");
+		xil_printf("DMA configured as SG mode \r\n");
 		return XST_FAILURE;
 	}
 
@@ -135,16 +135,16 @@ int axi_dma_read(void)
 
 static void print_data(void)
 {
-	u8 *RxPacket;
+	u32 *RxPacket;
 	int Index = 0;
 
-	RxPacket = (u8 *) RX_BUFFER_BASE;
+	RxPacket = (u32 *) RX_BUFFER_BASE;
 
 	#ifndef __aarch64__
 		Xil_DCacheInvalidateRange((UINTPTR)RxPacket, MAX_PKT_LEN);
 	#endif
 
 	for(Index = 0; Index < MAX_PKT_LEN; Index++)
-		xil_printf("Data: %x\r\n",(unsigned int)RxPacket[Index]);
+		xil_printf("Data: %x\r\n",(u32)RxPacket[Index]);
 }
 

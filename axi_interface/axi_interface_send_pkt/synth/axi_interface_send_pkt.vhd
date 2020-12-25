@@ -6,17 +6,19 @@ use ieee.numeric_std.all;
 
 entity axi_interface_send_pkt is
    generic(
-      MAX_PKT_LEN      : INTEGER := 32
+      DATA_SIZE        : INTEGER := 32;
+      MAX_PKT_LEN      : INTEGER := 16
    );
    port(
       aclk             : in    std_logic;
       aresetn          : in    std_logic;
-      
+
       -- AXI Interface
-      m_axis_tdata  	: out   std_logic_vector(31 downto 0);
+      m_axis_tdata  	: out   std_logic_vector((DATA_SIZE - 1) downto 0);
+      m_axis_tkeep 	: out   std_logic_vector(((DATA_SIZE / 8) - 1) downto 0);
       m_axis_tlast 	: out   std_logic;
-      m_axis_tvalid 	: out   std_logic;
-      m_axis_tready 	: in    std_logic
+      m_axis_tready 	: in    std_logic;
+      m_axis_tvalid 	: out   std_logic
    );
 end entity axi_interface_send_pkt;
 
@@ -72,9 +74,10 @@ begin
 					axi_state     <= WAITFOR;
 				end if;
 			when SEND =>
+				--m_axis_tvalid <= '1';
 				if(m_axis_tready = '1') then
-					m_axis_tdata  <= datas(counter_data); 
 					m_axis_tvalid <= '1';
+					m_axis_tdata  <= datas(counter_data); 
 					
 					if(counter_data = (MAX_PKT_LEN - 1)) then
 						counter_data  <= 0;
@@ -92,7 +95,7 @@ begin
 					m_axis_tvalid <= '0';
 					m_axis_tlast  <= '0';
 					
-					axi_state     <= SEND;
+					axi_state     <= WAITFOR;
 				end if;	
 			when AFTER_SEND =>
 				m_axis_tdata  <= (others => '0');
@@ -105,5 +108,7 @@ begin
 		end case;
 	else end if;
 end process;
+
+m_axis_tkeep <= (others => '1');
 
 end arc_axi_interface_send_pkt;
