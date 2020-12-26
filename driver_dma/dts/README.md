@@ -10,5 +10,6 @@
 
 On inclut alors ce fichier dans le fichier system-top.dts, représentant la board
 (fichier top-level)
+/!\ Penser à linker dma_phandles.dtsi dans os/output/build/linux-xilinx-v2018.2/arch/arm/boot/dts /!\
 '''
 
