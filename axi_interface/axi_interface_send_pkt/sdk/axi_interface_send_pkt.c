@@ -31,8 +31,8 @@
 #define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
 #define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
 
-#define MAX_PKT_LEN		0x10
-
+#define LEN_PKT            	16
+#define LEN_PKT_BYTES		(LEN_PKT * 4)
 
 #if (!defined(DEBUG))
 extern void xil_printf(const char *format, ...);
@@ -120,11 +120,10 @@ int axi_dma_read(void)
 	int Status;
 
 	#ifdef __aarch64__
-		Xil_DCacheFlushRange((UINTPTR)RxBufferPtr, MAX_PKT_LEN);
+		Xil_DCacheFlushRange((UINTPTR)RxBufferPtr, LEN_PKT_BYTES);
 	#endif
 
-	Status = XAxiDma_SimpleTransfer(&AxiDma,(UINTPTR) RxBufferPtr,
-				MAX_PKT_LEN, XAXIDMA_DEVICE_TO_DMA);
+	Status = XAxiDma_SimpleTransfer(&AxiDma,(UINTPTR) RxBufferPtr, LEN_PKT_BYTES, XAXIDMA_DEVICE_TO_DMA);
 
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
@@ -141,10 +140,9 @@ static void print_data(void)
 	RxPacket = (u32 *) RX_BUFFER_BASE;
 
 	#ifndef __aarch64__
-		Xil_DCacheInvalidateRange((UINTPTR)RxPacket, MAX_PKT_LEN);
+		Xil_DCacheInvalidateRange((u32)RxPacket, LEN_PKT_BYTES);
 	#endif
 
-	for(Index = 0; Index < MAX_PKT_LEN; Index++)
+	for(Index = 0; Index < LEN_PKT; Index++)
 		xil_printf("Data: %x\r\n",(u32)RxPacket[Index]);
 }
-
