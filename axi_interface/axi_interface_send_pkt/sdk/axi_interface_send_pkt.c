@@ -31,8 +31,8 @@
 #define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
 #define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
 
-#define LEN_PKT            	16
-#define LEN_PKT_BYTES		(LEN_PKT * 4)
+#define LEN_PKT           16
+#define LEN_PKT_BYTES		  (LEN_PKT * 4)
 
 #if (!defined(DEBUG))
 extern void xil_printf(const char *format, ...);
@@ -83,7 +83,6 @@ static void uart550_setup(void)
 
 	XUartNs550_SetLineControlReg(XPAR_UARTNS550_0_BASEADDR,
 			XUN_LCR_8_DATA_BITS);
-
 }
 #endif
 
@@ -112,6 +111,9 @@ int axi_dma_read_config(u16 DeviceId){
 
 	XAxiDma_IntrDisable(&AxiDma, XAXIDMA_IRQ_ALL_MASK,
 						XAXIDMA_DEVICE_TO_DMA);
+
+	XAxiDma_IntrDisable(&AxiDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
+	XAxiDma_IntrDisable(&AxiDma, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
 
 	return XST_SUCCESS;
 }
