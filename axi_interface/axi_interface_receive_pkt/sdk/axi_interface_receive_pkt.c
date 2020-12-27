@@ -1,3 +1,5 @@
+// Very inspired by the example "xaxidma_example_simple_poll.c" of Xilinx
+
 #include "xaxidma.h"
 #include "xparameters.h"
 #include "xdebug.h"
@@ -120,7 +122,6 @@ int axi_dma_send(void){
 			Value = Value + 1;
 	}
 	TxBufferPtr[LEN_PKT - 1] = 0xF1;
-
 
 	Xil_DCacheFlushRange((UINTPTR)TxBufferPtr, LEN_PKT_BYTES);
 

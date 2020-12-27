@@ -1,4 +1,3 @@
--- AXI I2S Reader en mode esclave + receiver
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -15,11 +14,11 @@ entity axi_interface_receive_pkt is
 
       -- AXI Interface
       s_axis_tdata  	: in   std_logic_vector((DATA_SIZE - 1) downto 0);
-      s_axis_tkeep 	: in   std_logic_vector(((DATA_SIZE / 8) - 1) downto 0);
-      s_axis_tlast 	: in   std_logic;
+      s_axis_tkeep 	  : in   std_logic_vector(((DATA_SIZE / 8) - 1) downto 0);
+      s_axis_tlast 	  : in   std_logic;
       s_axis_tready 	: out  std_logic;
       s_axis_tvalid 	: in   std_logic;
-      
+
       -- Output
       data_out         : out  std_logic_vector(7 downto 0)
    );
@@ -46,24 +45,24 @@ process(aclk, aresetn)
 begin
 	if aresetn = '0' then
 		axi_state <= WAITREADY;
-		
+
 		s_axis_tready <= '0';
-		
+
 	elsif aclk'event and aclk='1' then
 	        if(counter_wait = WAIT_NB_CLOCK) then
 	        	counter_wait <= 0;
 	        else
 	        	counter_wait <= counter_wait + 1;
 	        end if;
-	        
+
 		case axi_state is
 			when WAITREADY =>
 				counter_data <= 0;
 				reg_data     <= s_axis_tdata;
-				
+
 				if(counter_wait = WAIT_NB_CLOCK) then
 					s_axis_tready <= '1';
-					
+
 					if(s_axis_tvalid = '1') then
 						axi_state <= ACQUIRE;
 					else
@@ -75,7 +74,7 @@ begin
 				end if;
 			when WAITVALID =>
 				reg_data <= s_axis_tdata;
-				
+
 				if(s_axis_tvalid = '1') then
 					axi_state           <= ACQUIRE;
 				else
@@ -85,12 +84,12 @@ begin
 				if(counter_data = LEN_PKT) then
 					s_axis_tready       <= '0';
 					reg_data            <= (others => '0');
-					
+
 					counter_data        <= 0;
 					axi_state           <= WAITREADY;
 				else
 					s_axis_tready       <= '1';
-					reg_data            <= s_axis_tdata; 
+					reg_data            <= s_axis_tdata;
 					datas(counter_data) <= reg_data;
 					counter_data        <= counter_data + 1;
 					axi_state           <= ACQUIRE;
