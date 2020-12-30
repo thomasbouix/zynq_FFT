@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ "$1" = "clean" ]
+then
+	echo "Deleting executables :"
+	rm -fv *.exe
+	exit
+fi
+
+rm -fv test_driver.exe
+rm -fv ~/U_test_driver.exe
+rm -fv U_test_driver.exe
+
+/home/thomas/polytech/projet_implementation/os/output/host/bin/arm-buildroot-linux-gnueabihf-gcc test_driver.c -o test_driver.exe
+uuencode test_driver.exe test_driver.exe > U_test_driver.exe 
+cp U_test_driver.exe ~

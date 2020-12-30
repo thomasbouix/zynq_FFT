@@ -63,7 +63,7 @@ static struct file_operations fops = {
 static int my_dma_probe(struct platform_device *pdev){
 	
 	printk(KERN_DEBUG "DMA_DRIVER : probe()\n");
-	printk(KERN_DEBUG "DMA_DRVIER : %s recognized\n", pdev->name);
+	printk(KERN_DEBUG "DMA_DRVIER : pdev->name = %s \n", pdev->name);
 	
 	int ret;
 	struct my_dma_device *mdev;

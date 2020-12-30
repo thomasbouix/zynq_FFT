@@ -11,13 +11,19 @@
 
 int main(void){
 
-	int file = open("/dev/my_gpio0", O_RDWR);
+	printf("Starting user test...\n");
+
+	int file = open("/dev/my_dma0", O_RDWR);
 	
 	if(file < 0){
 		perror("open");
 		exit(errno);
 	}
-	
+	else {
+		printf("Special file successfully opened\n");
+	}
+
+	printf("Trying to print a kernel message\n");	
 	ioctl(file, MY_DRIVER_PRINT, NULL);
 	
 	close(file);
