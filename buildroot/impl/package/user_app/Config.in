@@ -1,0 +1,5 @@
+config BR2_PACKAGE_USER_APP
+        bool "user_app"
+        help
+          my user application
+

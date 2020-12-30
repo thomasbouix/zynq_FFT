@@ -1,0 +1,2 @@
+source "$BR2_EXTERNAL_IMPL_PATH/package/dma_driver/Config.in"
+source "$BR2_EXTERNAL_IMPL_PATH/package/user_app/Config.in"
