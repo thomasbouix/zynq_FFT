@@ -9,6 +9,7 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
 #include "my_macro.h"
 
@@ -60,7 +61,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 			break;
 		case DMA_I2S_SIMPLE_READ:
 			// idma->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
-			// iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
+			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
 			// iowrite32((u32)buffer->data, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
 			// iowrite32(buffer->size, mdev->registers + S2MM_LENGTH);		// écrit la taille du buffer dans LENGTH
 			break;
