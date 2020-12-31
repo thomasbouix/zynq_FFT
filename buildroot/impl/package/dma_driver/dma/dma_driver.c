@@ -3,6 +3,7 @@
 #include <linux/ioctl.h>
 #include <linux/slab.h>
 #include <linux/cdev.h>
+#include <linux/resource.h>
 #include <linux/of.h>
 #include <linux/fs.h>
 #include <linux/device.h>
@@ -31,7 +32,8 @@ static struct class *class = NULL;
 
 static int my_open(struct inode *inode, struct file *file) {
 	printk(KERN_DEBUG "DMA_DRIVER : open()\n");
-	struct my_dma_device *mdev = container_of(inode->i_cdev, struct my_dma_device, cdev);
+	struct my_dma_device *mdev;
+	mdev = container_of(inode->i_cdev, struct my_dma_device, cdev);
 	file->private_data = mdev;
 	return 0;
 }
@@ -42,11 +44,25 @@ static int my_release(struct inode *inode, struct file *file) {
 	return 0;
 }
 
-static long my_ioctl(struct file *file, unsigned int cmd, unsigned long args) {
+static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
+
 	printk(KERN_DEBUG "DMA_DRIVER : ioctl()\n");
+
+	struct my_dma_device * mdev;
+	void * user_ptr;
+
+        mdev = file->private_data;
+	user_ptr = (void*) arg;
+
 	switch(cmd){
 		case MY_DRIVER_PRINT:
 			printk(KERN_DEBUG "PRINT\n");
+			break;
+		case DMA_I2S_SIMPLE_READ:
+			// idma->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
+			// iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
+			// iowrite32((u32)buffer->data, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
+			// iowrite32(buffer->size, mdev->registers + S2MM_LENGTH);		// écrit la taille du buffer dans LENGTH
 			break;
 	}
 	return 0;
@@ -89,7 +105,7 @@ static int my_dma_probe(struct platform_device *pdev){
 	if (mdev->registers == NULL) {
 		ret = -ENOMEM;
 		dev_err(&mdev->pdev->dev, "Unable to remap resource\n");
-		goto mvdev_free;
+		goto mdev_free;
 	}
 
 	ret = alloc_chrdev_region(&mdev->dt, 0, 1, "mydriver");
