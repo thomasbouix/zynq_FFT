@@ -65,37 +65,49 @@ static int my_dma_probe(struct platform_device *pdev){
 	printk(KERN_DEBUG "DMA_DRIVER : probe()\n");
 	printk(KERN_DEBUG "DMA_DRVIER : pdev->name = %s \n", pdev->name);
 	
-	int ret;
-	struct my_dma_device *mdev;
+	int ret;			// code d'erreur de nos fonctions
+	struct resource * res;		// informations sur la mémoire du device
+	struct my_dma_device *mdev;	// rassemble toutes les struct kernel décrivant notre device 
 	struct device *dev;
 
 	static int instance_num = 0;
 
-	printk(KERN_DEBUG "allocation my_dma_device\n");
 	mdev = kzalloc(sizeof(struct my_dma_device), GFP_KERNEL);
 	if(!mdev){
-		printk(KERN_DEBUG "kalloc() my_dma_device failed\n");
+		printk(KERN_DEBUG "DMA_DRIVER : kzalloc( my_dma_device ) failed\n");
 		return -ENOMEM;
+	} else {
+		printk(KERN_DEBUG "DMA_DRIVER : kzalloc( my_dma_device ) successful\n");
 	}
 	
 	mdev->pdev = pdev;
-	// fait pointer un champ de pdev vers mdev (alors que pdev est un champ de mdev !)
-	platform_set_drvdata(pdev, mdev);
+	platform_set_drvdata(pdev, mdev);	// fait pointer un champ de pdev vers mdev (alors que pdev est un champ de mdev !)
 
-	printk(KERN_DEBUG "allocation chrdev\n");
-	ret = alloc_chrdev_region(&mdev->dt, 0, 1, "mydriver");
-	if(ret < 0){
-		printk(KERN_DEBUG "alloc_chrdev_region() failed\n");
-		goto mdev_free;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0); 		// récupère les adresses mémoires physiques du pdev
+	mdev->registers = devm_ioremap_resource(&pdev->dev, res);	// remappage physique -> kernel 
+									// pdev->dev alloc et desalloc gérés automatiquement par le kernel
+	if (mdev->registers == NULL) {
+		ret = -ENOMEM;
+		dev_err(&mdev->pdev->dev, "Unable to remap resource\n");
+		goto mvdev_free;
 	}
 
-	// Créer le fichier spécial
-	printk(KERN_DEBUG "creation dev\n");
+	ret = alloc_chrdev_region(&mdev->dt, 0, 1, "mydriver");
+	if(ret < 0){
+		printk(KERN_DEBUG "DMA_DRIVER : alloc_chrdev_region() failed\n");
+		goto mdev_free;
+	} else {
+		printk(KERN_DEBUG "DMA_DRIVER : alloc_chrdev_region() successful\n");
+	}
+
+	// crée le fichier spécial
 	dev = device_create(class, NULL, mdev->dt, NULL, "my_dma%d", instance_num++);
 	if(!dev){
-		printk(KERN_DEBUG "device_create() failed\n");
+		printk(KERN_DEBUG "DMA_DRIVER : device_create() failed\n");
 		ret = -ENOMEM;
 		goto region_free;
+	} else {
+		printk(KERN_DEBUG "DMA_DRIVER : device_create() successful\n");
 	}
 	
 	// ajout des opérations
@@ -103,12 +115,14 @@ static int my_dma_probe(struct platform_device *pdev){
 	cdev_init(&mdev->cdev, &fops);
 
 	// exportation du device dans le kernel
-	printk(KERN_DEBUG "DMA_DRIVER : cdev_add()\n");
 	ret = cdev_add(&mdev->cdev, mdev->dt, 1);
 	if(ret < 0){
-		printk(KERN_DEBUG "cdev_add() failed\n");
+		printk(KERN_DEBUG "DMA_DRIVER : cdev_add() failed\n");
 		goto device_free;
+	} else {
+		printk(KERN_DEBUG "DMA_DRIVER : cdev_add() successful \n");
 	}
+
 	return 0;
 	
 	device_free:
