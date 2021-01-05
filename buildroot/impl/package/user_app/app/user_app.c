@@ -15,11 +15,13 @@ int main(int argc, char * argv[]) {
 	printf("Starting user test...\n");
 	
 	if (argc != 2) {
-		printf("missing arg\n");
+		printf("Missing arg :\n			\
+			\t1 : MY_DRIVER_PRINT\n		\
+			\t2 : DMA_SIMPLE_WRITE\n	\
+			\t3 : ASSERT_WRITE\n		\
+			Terminating\n");
 		return 0;
 	}
-
-	char * arg = argv[1];
 
 	int file = open("/dev/my_dma0", O_RDWR);
 	
@@ -31,18 +33,17 @@ int main(int argc, char * argv[]) {
 		printf("Special file successfully opened\n");
 	}
 
-	if ( strcmp(arg, "1") == 0) {
-		printf("USER_APP : trying to print\n");	
+	if 	( strcmp(argv[1], "1") == 0 ) {
+		printf("USER_APP : MY_DRIVER_PRINT\n");	
 		ioctl(file, MY_DRIVER_PRINT, NULL);
-
-	} else if ( strcmp(arg, "2") == 0 ) {
+	} 
+	else if ( strcmp(argv[1], "2") == 0 ) {
 		printf("USER_APP : DMA_SIMPLE_WRITE");	
 		ioctl(file, DMA_SIMPLE_WRITE, NULL);
-
-	} else if ( strcmp(arg, "3") == 0 ) {
-		printf("USER_APP : assertion\n");	
+	} 
+	else if ( strcmp(argv[1], "3") == 0 ) {
+		printf("USER_APP : ASSERT_WRITE\n");	
 		ioctl(file, ASSERT_WRITE, NULL);
-
 	}
 		
 	close(file);
