@@ -1,5 +1,5 @@
 GHDL = ghdl
-GHDL_SIM_TIME = 100us
+GHDL_SIM_TIME = 1ms
 
 GHDL_TARGETS = $(subst .vhd,,$(subst sim/,,$(SIM_FILES)))
 GHDL_SIM_TARGETS = $(addsuffix .vcd,$(GHDL_TARGETS))

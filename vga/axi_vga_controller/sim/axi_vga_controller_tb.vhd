@@ -21,8 +21,8 @@ architecture arc_axi_vga_controller_tb of axi_vga_controller_tb is
   signal green          : std_logic_vector(3 downto 0);
   signal blue           : std_logic_vector(3 downto 0);
 
-  constant clock_axi    : time :=  2 ns;
-  constant clock_vga    : time :=  19.86 ns;
+  constant clock_axi    : time :=  0.000002 ns;
+  constant clock_vga    : time :=  0.00001986 ns;
 
   constant pkt_len      : integer := 640;
 
@@ -68,11 +68,10 @@ begin
       wait;
   end process;
 
-
   transaction_p : process
   --variable index : integer := 0;
   begin
-      wait for 2000*clock_axi;
+      wait for 3000*clock_axi;
       s_axis_tdata  <= x"00000000";
       s_axis_tkeep  <= x"F";
       s_axis_tlast  <= '0';
@@ -87,6 +86,29 @@ begin
 
       wait for 2*clock_axi;
       s_axis_tdata  <= std_logic_vector(to_unsigned((pkt_len - 1), s_axis_tdata'length));
+      s_axis_tlast  <= '1';
+
+      wait for 2*clock_axi;
+      s_axis_tlast  <= '0';
+      s_axis_tvalid <= '0';
+      s_axis_tdata  <= x"00000000";
+
+      wait for 40*clock_axi;
+
+      s_axis_tdata  <= x"00000040";
+      s_axis_tkeep  <= x"F";
+      s_axis_tlast  <= '0';
+      s_axis_tvalid <= '1';
+
+      wait until s_axis_tready = '1';
+
+      for index in 1 to (pkt_len - 1) loop
+        wait for 2*clock_axi;
+        s_axis_tdata  <= std_logic_vector(to_unsigned(40 + index, s_axis_tdata'length));
+      end loop;
+
+      wait for 2*clock_axi;
+      s_axis_tdata  <= std_logic_vector(to_unsigned(40 + (pkt_len - 1), s_axis_tdata'length));
       s_axis_tlast  <= '1';
 
       wait for 2*clock_axi;

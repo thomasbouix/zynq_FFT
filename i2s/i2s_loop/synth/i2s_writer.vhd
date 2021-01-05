@@ -6,7 +6,7 @@ use ieee.numeric_std.all;
 
 entity i2s_writer is
 	generic(
-		DATA_LENGTH	: INTEGER := 16	-- taille des données
+		DATA_LENGTH	: INTEGER := 32	-- taille des données
 	);
 	port(
 		reset_n	: in	std_logic;
@@ -15,9 +15,9 @@ entity i2s_writer is
 		data		: in	std_logic_vector((DATA_LENGTH-1) downto 0);
 
 		mclk		: out	std_logic;	-- clock du systeme
-		sclk		: out 	std_logic;	-- frequence din
-		lrclk		: out 	std_logic;	-- left / right
-		dout		: out 	std_logic	-- sortie de l'ADC
+		sclk		: out std_logic;	-- frequence din
+		lrclk		: out std_logic;	-- left / right
+		dout		: out std_logic	-- sortie de l'ADC
 	);
 end entity i2s_writer;
 
@@ -26,8 +26,8 @@ architecture arc_i2s_writer of i2s_writer is
 type t_etat is (etat0, etat1, etat2);
 signal etat : t_etat;
 
-signal counter		: integer range 0 to DATA_LENGTH;
-signal counter_clk	: unsigned (7 downto 0);
+signal counter		 : integer range 0 to DATA_LENGTH;
+signal counter_clk : unsigned (7 downto 0);
 
 signal sclk_old	: std_logic;
 signal sclk_cur	: std_logic;
@@ -81,8 +81,6 @@ begin
 				if(sclk_old = '0' and sclk_cur = '1') then
 					reg_dout <= reg_data(reg_data'length - 1);
 					reg_data <= reg_data(reg_data'length-2 downto 0) & '0';
-					--reg_dout <= '1';
-					--reg_data <= reg_data;
 
 					if( counter = (DATA_LENGTH - 1) )  then
 						counter <= 0;

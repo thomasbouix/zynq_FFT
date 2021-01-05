@@ -16,7 +16,7 @@ architecture arc_axi_interface_receive_pkt_tb of axi_interface_receive_pkt_tb is
 
   constant clock_axi : time :=  2 ns;
 
-begin 
+begin
 
   axi_interface_receive_pkt : entity work.axi_interface_receive_pkt port map (	aresetn       => aresetn,
 	  										aclk          => aclk,
@@ -27,7 +27,7 @@ begin
 	  										s_axis_tvalid => s_axis_tvalid,
 	  										data_out      => data_out
 	      						 	 		);
-  
+
   clock_axi_p : process begin
       aclk <= '0';
       wait for clock_axi;
@@ -42,16 +42,16 @@ begin
       wait for 50 us;
       wait;
   end process;
-  
+
   transaction_p : process begin
       wait for 40*clock_axi;
       s_axis_tdata  <= x"00000001";
       s_axis_tkeep  <= x"F";
       s_axis_tlast  <= '0';
       s_axis_tvalid <= '1';
-      
+
       wait until s_axis_tready = '1';
-      
+
       wait for 2*clock_axi;
       s_axis_tdata  <= x"00000002";
       wait for 2*clock_axi;
@@ -87,8 +87,8 @@ begin
       s_axis_tlast  <= '0';
       s_axis_tvalid <= '0';
       s_axis_tdata  <= x"00000000";
-      
+
       wait for 40*clock_axi;
   end process;
-  
+
 end arc_axi_interface_receive_pkt_tb;

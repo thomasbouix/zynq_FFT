@@ -7,7 +7,7 @@ end entity;
 
 architecture arch of i2s_loop_tb is
 
-  constant clock_t : time :=  44.288941 ns;
+  constant clock_t : time :=  20.3450521 ns; --22.1442744 ns;
 
   signal clk, reset_n               : std_logic;
   signal mclki, sclki, lrclki, din  : std_logic;
@@ -21,7 +21,7 @@ begin
       clk     => clk,
       mclko   => mclko,
       sclko   => sclko,
-      lrclko  => lrclko, 
+      lrclko  => lrclko,
       din     => din,
       mclki   => mclki,
       sclki   => sclki,

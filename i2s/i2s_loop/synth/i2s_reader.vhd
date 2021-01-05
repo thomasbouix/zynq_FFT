@@ -6,18 +6,18 @@ use ieee.numeric_std.all;
 
 entity i2s_reader is
 	generic(
-		DATA_LENGTH	: INTEGER := 16	-- taille des données
+		DATA_LENGTH	: INTEGER := 32	-- taille des données
 	);
 	port(
 		reset_n	: in	std_logic;
-		clk		: in	std_logic;
+		clk	  	: in	std_logic;
 
 		data		: out	std_logic_vector((DATA_LENGTH-1) downto 0);
 
-		mclk		: out	std_logic;	-- clock du systeme
+		mclk		: out	std_logic;	  -- clock du systeme
 		sclk		: out 	std_logic;	-- frequence din
 		lrclk		: out 	std_logic;	-- left / right
-		din		: in 	std_logic	-- sortie de l'ADC
+		din	  	: in 	std_logic	    -- sortie de l'ADC
 	);
 end entity i2s_reader;
 
@@ -26,11 +26,11 @@ architecture arc_i2s_reader of i2s_reader is
 type t_etat is (etat0, etat1, etat2, etat3);
 signal etat : t_etat;
 
-signal counter		: integer range 0 to DATA_LENGTH;
+signal counter		  : integer range 0 to DATA_LENGTH;
 signal counter_clk	: unsigned (7 downto 0);
 
-signal sclk_old	: std_logic;
-signal sclk_cur	: std_logic;
+signal sclk_old	    : std_logic;
+signal sclk_cur	    : std_logic;
 signal lrclk_old   	: std_logic;
 signal lrclk_cur   	: std_logic;
 
@@ -46,8 +46,8 @@ begin
 
       		counter_clk <= (others => '0');
 		counter     <= 0;
-
 		reg_data    <= (others => '0');
+		data        <= (others => '0');
 
     		sclk_old    <= '0';
     		sclk_cur    <= '0';
@@ -58,9 +58,9 @@ begin
     		counter_clk <= counter_clk + 1;
 
     		sclk_old    <= sclk_cur;
-      		sclk_cur    <= not(counter_clk(1));
-      		lrclk_old   <= lrclk_cur;
-      		lrclk_cur   <= counter_clk(7);
+      	sclk_cur    <= not(counter_clk(1));
+      	lrclk_old   <= lrclk_cur;
+      	lrclk_cur   <= counter_clk(7);
 
 	    	case etat is
 			when etat0 =>
