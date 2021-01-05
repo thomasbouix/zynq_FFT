@@ -74,7 +74,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 		case ASSERT_WRITE:
 			printk(KERN_DEBUG "IOCTL : ASSERTION\n");
 			read = ioread32(mdev->registers + S2MM_CR);
-			printk(KERN_DEBUG "IOCTL : read = %u\n");	
+			printk(KERN_DEBUG "IOCTL : read = %u\n", read);	
 			break;
 	}
 
