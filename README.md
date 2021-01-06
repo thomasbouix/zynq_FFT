@@ -1,5 +1,4 @@
 # Projet Implémentation
----
 *Implémentation d'une FFT sur SoC Zynq*
 
 ### Design Hardware
