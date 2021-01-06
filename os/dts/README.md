@@ -1,6 +1,7 @@
 # Adaptation du device tree
 
-### Le fichier *dma_phandles.dtsi*
+### Le fichier *dma_phandles.dtsi* (depreciated)
+_On n'utilise plus le phandle dans le driver DMA_
 ```
 - Fichier implémentant un noeud par dma dans notre système (i2s, fft, vga)
 - Ces noeuds sont fils du bus amba
