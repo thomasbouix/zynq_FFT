@@ -9,6 +9,7 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/init.h>
+#include <linux/io.h>
 
 #include "my_macro.h"
 
@@ -53,18 +54,30 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 
         mdev = file->private_data;
 	user_ptr = (void*) arg;
+	unsigned int read;
 
 	switch(cmd){
 		case MY_DRIVER_PRINT:
-			printk(KERN_DEBUG "PRINT\n");
+			printk(KERN_DEBUG "IOCTL : PRINT\n");
 			break;
 		case DMA_I2S_SIMPLE_READ:
+			printk(KERN_DEBUG "IOCTL : DMA_I2S_SIMPLE_READ\n");
 			// idma->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
 			// iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
 			// iowrite32((u32)buffer->data, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
-			// iowrite32(buffer->size, mdev->registers + S2MM_LENGTH);		// écrit la taille du buffer dans LENGTH
+			// iowrite32(buffer->size, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
+			break;
+		case DMA_SIMPLE_WRITE:
+			printk(KERN_DEBUG "IOCTL : SIMPLE_WRITE\n");
+			iowrite32(42, mdev->registers + S2MM_CR);	
+			break;
+		case ASSERT_WRITE:
+			printk(KERN_DEBUG "IOCTL : ASSERTION\n");
+			read = ioread32(mdev->registers + S2MM_CR);
+			printk(KERN_DEBUG "IOCTL : read = %u\n", read);	
 			break;
 	}
+
 	return 0;
 }
 
@@ -80,7 +93,13 @@ static int my_dma_probe(struct platform_device *pdev){
 	
 	printk(KERN_DEBUG "DMA_DRIVER : probe()\n");
 	printk(KERN_DEBUG "DMA_DRVIER : pdev->name = %s \n", pdev->name);
-	
+
+	// on regarde ici quel est le dma du dt appel probe
+	//	
+	// ptr_node = of_get_child_node( pdev->dev.node, null ); 				// renvoie la première channel du dma 
+	// str = of_read_ppt_string_index( node, comaptibe, lpointeur vers channels, 0 ) 	// renvoie la premiere string du champ compatible 
+	// strcmp(str, "compatible_i2s"); 
+
 	int ret;			// code d'erreur de nos fonctions
 	struct resource * res;		// informations sur la mémoire du device
 	struct my_dma_device *mdev;	// rassemble toutes les struct kernel décrivant notre device 
@@ -173,9 +192,14 @@ static int my_dma_remove(struct platform_device *pdev){
 	return 0;
 }
 
-// tableau 
+// tableau : compatibles communs à tous nos dma
+// on va discriminer les différents dma en regardant les interruptions de leurs channels 
+// irq i2s : sortie  
+// irq fft : entree-sortie
+// irq vga : entree 
 static const struct of_device_id my_dma_ids[] = { 
-	{.compatible = "axi_dma_impl", },
+	{.compatible = "xlnx,axi-dma-7.1"}, 
+	{.compatible = "xlnx,axi-dma-1.00.a"},
 	{},
 };
 
