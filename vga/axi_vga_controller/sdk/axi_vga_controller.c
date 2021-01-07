@@ -32,7 +32,7 @@
 #define RX_BUFFER_BASE		(MEM_BASE_ADDR + 0x00300000)
 #define RX_BUFFER_HIGH		(MEM_BASE_ADDR + 0x004FFFFF)
 
-#define LEN_PKT            	641
+#define LEN_PKT            	640
 #define LEN_PKT_BYTES		(LEN_PKT * 4)
 
 #if (!defined(DEBUG))
