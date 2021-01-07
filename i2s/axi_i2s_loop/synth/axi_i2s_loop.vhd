@@ -6,7 +6,7 @@ entity axi_i2s_loop is
   generic(
     DATA_LEN         : INTEGER := 32;
     LEN_PKT          : INTEGER := 16;
-    SAMPLE_LEN       : INTEGER := 24
+    SAMPLE_LEN       : INTEGER := 32
   );
   port (
       -- AXI Clock

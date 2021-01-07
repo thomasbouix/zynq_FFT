@@ -8,7 +8,7 @@ entity axi_i2s_reader is
    generic(
       DATA_LEN      : INTEGER := 32;
       LEN_PKT       : INTEGER := 16;
-			SAMPLE_LEN    : INTEGER := 24
+			SAMPLE_LEN    : INTEGER := 32
    );
 	port(
 		aresetn        	: in  std_logic;
@@ -112,14 +112,15 @@ begin
 					when ACQUIRE =>
 						if(sclk_old = '0' and sclk_cur = '1') then
 							reg_data     <= reg_data(reg_data'length-2 downto 0) & din;
-							counter_bit  <= counter_bit + 1;
+              if(counter_bit = SAMPLE_LEN)  then
+  							counter_bit  <= 0;
+  							i2s_state    <= TRANSFERT;
+  						else
+                counter_bit  <= counter_bit + 1;
+  							i2s_state    <= ACQUIRE;
+  						end if;
 						else end if;
-						if(counter_bit = SAMPLE_LEN)  then
-							counter_bit  <= 0;
-							i2s_state    <= TRANSFERT;
-						else
-							i2s_state    <= ACQUIRE;
-						end if;
+
 					when TRANSFERT =>
 						data_ready     <= '1';
 						if(sclk_old = '0' and sclk_cur = '1') then
@@ -145,13 +146,13 @@ end process;
 process(aclk, aresetn)
 begin
   if aresetn = '0' then
-    axi_state      <= WAITFOR;
+    axi_state <= WAITFOR;
 
 		transfert_done <= '0';
 
-    m_axis_tdata   <= (others => '0');
-    m_axis_tvalid  <= '0';
-    m_axis_tlast   <= '0';
+    m_axis_tdata  <= (others => '0');
+    m_axis_tvalid <= '0';
+    m_axis_tlast  <= '0';
 
 	elsif aclk'event and aclk='1' then
 		case axi_state is

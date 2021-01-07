@@ -8,7 +8,7 @@ entity axi_i2s_writer is
 	generic(
 		DATA_LEN         : INTEGER := 32;
 		LEN_PKT          : INTEGER := 16;
-		SAMPLE_LEN       : INTEGER := 24
+		SAMPLE_LEN       : INTEGER := 32
 	);
 	port(
 		aresetn	         : in	 std_logic;
@@ -98,11 +98,13 @@ begin
     		sclk_old    <= sclk_cur;
     		sclk_cur    <= not(counter_clk(1));
     		lrclk_old   <= lrclk_cur;
-    		lrclk_cur   <= counter_clk(7);
+    		lrclk_cur   <= not(counter_clk(7));
 
 		case i2s_state is
 			when WAITDATA =>
+				reg_dout       <= '0';
 				transfert_done <= '0';
+
 				if(data_ready = '1') then
 					i2s_state <= WAITFOR;
 				else
