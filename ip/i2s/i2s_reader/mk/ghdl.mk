@@ -15,7 +15,12 @@ ghdl_clean:
 $(GHDL_TARGETS):%:sim/%.vhd
 	$(GHDL) -i $(SYNTH_FILES) $(SIM_FILES)
 	$(GHDL) -m $@
+<<<<<<< HEAD
  
 $(GHDL_SIM_TARGETS):%.vcd:% $(GHDL_TARGETS)
 	./$< --stop-time=$(GHDL_SIM_TIME) --vcd=$<.vcd
+=======
+
+$(GHDL_SIM_TARGETS):%.vcd:% $(GHDL_TARGETS)
+>>>>>>> master
 	./$< --stop-time=$(GHDL_SIM_TIME) --wave=$<.ghw

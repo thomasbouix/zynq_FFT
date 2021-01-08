@@ -60,7 +60,7 @@ begin
     		sclk_old    <= sclk_cur;
       		sclk_cur    <= not(counter_clk(1));
       		lrclk_old   <= lrclk_cur;
-      		lrclk_cur   <= counter_clk(7);
+      		lrclk_cur   <= counter_clk(6);
 
 	    	case etat is
 			when etat0 =>

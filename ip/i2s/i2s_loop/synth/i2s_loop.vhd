@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity i2s_loop is
 
   generic (
-      DATA_LENGTH : integer := 16
+      DATA_LENGTH : integer := 25
   );
 
   port (
@@ -43,7 +43,7 @@ begin
         data    => data,
         mclk    => mclko,
         sclk    => sclko,
-        lrclk   => lrclko, 
+        lrclk   => lrclko,
         din     => din
     );
 
