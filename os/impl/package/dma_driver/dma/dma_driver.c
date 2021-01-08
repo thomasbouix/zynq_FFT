@@ -50,8 +50,7 @@ static int my_release(struct inode *inode, struct file *file) {
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 
 	printk(KERN_DEBUG "DMA_DRIVER : ioctl()\n");
-
-	struct 	my_dma_device		*	mdev;
+	struct 	my_dma_device*	mdev;
 	void * user_ptr;
 	void * buffer_address;
 	size_t	buffer_length;
@@ -62,31 +61,29 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 
 	switch(cmd) {
 		// Ecriture simple dans le kernel ring buffer
-		case DMA_PRINT :
+		case DMA_PRINT:
 			printk(KERN_DEBUG "IOCTL : PRINT\n");
 			break;
 		// Lit les données d'un stream et les stocke dans un buffer donné en argument
 		// user_ptr = buffer_address + buffer length
-		case DMA_READ_S2MM :
+		case DMA_READ_S2MM:
 			printk(KERN_DEBUG "IOCTL : DMA_READ_S2MM\n");
-			/*	
 			mdev->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
 			buffer_address	= ((p_axi_dma_buffer) user_ptr)->address;
 			buffer_length	= ((p_axi_dma_buffer) user_ptr)->length;
 			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
 			iowrite32((u32) buffer_address, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
 			iowrite32(buffer_length, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
-			wait_tx_done(mdev);						// attends que la lecture soit complète
-			*/
+			// wait_tx_done(mdev);						// attends que la lecture soit complète
 			break;
 		// Test l'écriture dans un registre DMA (bus S_AXI_LITE) via iowrite32()
 		case DMA_IOWRITE32_TEST:
 			printk(KERN_DEBUG "IOCTL : DMA_IOWRITE32_TEST\n");
-			iowrite32(1 | 1 << (IOC_BIT), mdev->registers + S2MM_CR);
+			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);
 			read = ioread32(mdev->registers + S2MM_CR);
 			printk(KERN_DEBUG "IOCTL : read = %u\n", read);
 			break;
-
+	}	
 	return 0;
 }
 
