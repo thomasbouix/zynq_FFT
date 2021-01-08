@@ -60,7 +60,7 @@ architecture arc_axi_vga_controller of axi_vga_controller is
 
 	signal counter_pixel : integer range 0 to PKT_LEN;
 
-	type t_axi_state is (WAITFLINE, WAITREADY, WAITVALID, ACQUIRE, TREAT);
+	type t_axi_state is (WAITFLINE, WAITREADY, WAITVALID, ACQUIRE);
 	signal axi_state : t_axi_state;
 
 	type t_vga_state is (WAITFLINE, GENSIGNALS);
@@ -88,53 +88,56 @@ begin
 	process(vga_clk, aresetn)
 	begin
 		if aresetn = '0'  then
-			count_v       <= 0;
-			count_h       <= 0;
-			counter_pixel <= 0;
+			count_v             <= 0;
+			count_h             <= 0;
+			counter_pixel       <= 0;
 
-			va_state      <= '0';
-			va_state_old  <= '0';
-			va_state_cur  <= '0';
+			va_state            <= '0';
+			va_state_old        <= '0';
+			va_state_cur        <= '0';
 
-			hor_sync      <= '1';
-			ver_sync      <= '1';
+			hor_sync            <= '1';
+			ver_sync            <= '1';
 
-			vga_state     <= WAITFLINE;
+			vga_state           <= WAITFLINE;
 
 		elsif rising_edge(vga_clk) then
 			case vga_state is
 				when WAITFLINE  =>
 					if(first_line = '1') then
-						vga_state <= GENSIGNALS;
+						vga_state     <= GENSIGNALS;
 					else
-						vga_state <= WAITFLINE;
+						vga_state     <= WAITFLINE;
 					end if;
 
 				when GENSIGNALS =>
-					va_state_old <= va_state_cur;
-					va_state_cur <= va_state;
+					va_state_old    <= va_state_cur;
+					va_state_cur    <= va_state;
 
 					if(count_h = (h_period - 1)) then
-						count_h <= 0;
+						count_h       <= 0;
 						if(count_v = (v_period - 1)) then
-							count_v <= 0;
+							vga_state   <= WAITFLINE;
+							count_v     <= 0;
 						else
-							count_v <= count_v + 1;
+							vga_state   <= GENSIGNALS;
+							count_v     <= count_v + 1;
 						end if;
 					else
-						count_h <= count_h + 1;
+						vga_state   <= GENSIGNALS;
+						count_h       <= count_h + 1;
 					end if;
 
 					if ( (count_h > (HOR_FP + HOR_VA)) and (count_h < (HOR_FP + HOR_VA + HOR_SP)) ) then
-						hor_sync <= '0';
+						hor_sync      <= '0';
 					else
-						hor_sync <= '1';
+						hor_sync      <= '1';
 					end if;
 
 					if ( (count_v > (VER_FP + VER_VA)) and (count_v < (VER_FP + VER_VA + VER_SP)) ) then
-						ver_sync <= '0';
+						ver_sync      <= '0';
 					else
-						ver_sync <= '1';
+						ver_sync      <= '1';
 					end if;
 
 					if( (count_h >= HOR_FP) and (count_h < (HOR_FP + HOR_VA)) and (count_v >= VER_FP) and (count_v < (VER_FP + VER_VA)) ) then
@@ -156,7 +159,7 @@ begin
 					end if;
 
 				when others     =>
-					vga_state   <= WAITFLINE;
+					vga_state       <= WAITFLINE;
 
 			end case;
 		end if;
@@ -189,7 +192,10 @@ begin
 					first_line      <= '0';
 					counter_data    <= 0;
 					reg_data        <= s_axis_tdata;
-					if(va_state_old = '1' and va_state_cur = '0') then
+					if(vga_state = WAITFLINE) then
+						s_axis_tready <= '0';
+						axi_state     <= WAITFLINE;
+					elsif(va_state_old = '1' and va_state_cur = '0') then
 						s_axis_tready <= '1';
 						if(s_axis_tvalid = '1') then
 							axi_state   <= ACQUIRE;
