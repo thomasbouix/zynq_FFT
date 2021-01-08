@@ -33,6 +33,14 @@ struct my_dma_device {
 
 static struct class *class = NULL;
 
+static void wait_tx_completion(struct my_dma_device * mdev) {
+	while(!mdev->tx_done);
+}
+
+static void wait_rx_completion(struct my_dma_device * mdev) {
+	while(!mdev->rx_done);
+}
+
 static int my_open(struct inode *inode, struct file *file) {
 	printk(KERN_DEBUG "DMA_DRIVER : open()\n");
 	struct my_dma_device *mdev;
@@ -74,7 +82,7 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
 			iowrite32((u32) buffer_address, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
 			iowrite32(buffer_length, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
-			// wait_tx_done(mdev);						// attends que la lecture soit complète
+			wait_rx_completion(mdev);					// attends que la lecture soit complète
 			break;
 		// Test l'écriture dans un registre DMA (bus S_AXI_LITE) via iowrite32()
 		case DMA_IOWRITE32_TEST:
@@ -86,16 +94,6 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 	}	
 	return 0;
 }
-
-/*
-static void wait_tx_completion(struct my_dma_device * mdev) {
-	while(!mdev->tx_done);
-}
-
-static void wait_rx_completion(struct my_dma_device * mdev) {
-	while(!mdev->rx_done);
-}
-*/
 
 // assigné pour chaque device avec cdev_init()
 static struct file_operations fops = {
@@ -211,9 +209,9 @@ static int my_dma_remove(struct platform_device *pdev){
 // Connecte une ISR à une IRQ
 /*
 int axi_dma_request_irq(struct device_node *channel_node,
-												struct axi_dma_channel *channel,
-												char *irq_name,
-												irq_handler_t handler_function) {
+			struct axi_dma_channel *channel,
+			char *irq_name,
+			irq_handler_t handler_function) {
 	int err;
 	channel->irq = irq_of_parse_and_map(channel_node, 0);
 	err = request_irq(channel->irq, handler_function, 0, irq_name, channel)
@@ -224,7 +222,6 @@ int axi_dma_request_irq(struct device_node *channel_node,
 	return 0;
 }
 */
-
 
 // tableau : compatibles communs à tous nos dma
 // on va discriminer les différents dma en regardant les interruptions de leurs channels
