@@ -49,34 +49,39 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 
 	printk(KERN_DEBUG "DMA_DRIVER : ioctl()\n");
 
-	struct my_dma_device * mdev;
-	void * user_ptr;
+	struct 	my_dma_device * mdev;
+	void * 	user_ptr;
+	void *	buffer_address;
+	size_t	buffer_lenght;
 
         mdev = file->private_data;
 	user_ptr = (void*) arg;
+
 	unsigned int read;
 
-	switch(cmd){
-		case MY_DRIVER_PRINT:
+	switch(cmd) {
+		// Ecriture simple dans le kernel ring buffer
+		case DMA_PRINT :
 			printk(KERN_DEBUG "IOCTL : PRINT\n");
 			break;
-		case DMA_I2S_SIMPLE_READ:
-			printk(KERN_DEBUG "IOCTL : DMA_I2S_SIMPLE_READ\n");
+		// Lit les données d'un stream et les stocke dans un buffer donné en argument	
+		// user_ptr = buffer_address + buffer length
+		case DMA_READ_S2MM :
+			printk(KERN_DEBUG "IOCTL : DMA_READ_S2MM\n");
+			// buffer_address	= user_ptr;
+			// buffer_lenght	= user_ptr;
+			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
+			iowrite32(buffer_length, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
+			// iowrite32((u32) buffer_address, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
 			// idma->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
-			// iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
-			// iowrite32((u32)buffer->data, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
-			// iowrite32(buffer->size, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
 			break;
-		case DMA_SIMPLE_WRITE:
-			printk(KERN_DEBUG "IOCTL : SIMPLE_WRITE\n");
-			iowrite32(42, mdev->registers + S2MM_CR);	
-			break;
-		case ASSERT_WRITE:
-			printk(KERN_DEBUG "IOCTL : ASSERTION\n");
+		// Test l'écriture dans un registre DMA (bus S_AXI_LITE) via iowrite32() 
+		case DMA_IOWRITE32_TEST:
+			printk(KERN_DEBUG "IOCTL : DMA_IOWRITE32_TEST\n");
+			iowrite32(1 | 1 << (IOC_BIT), mdev->registers + S2MM_CR);	
 			read = ioread32(mdev->registers + S2MM_CR);
 			printk(KERN_DEBUG "IOCTL : read = %u\n", read);	
 			break;
-	}
 
 	return 0;
 }
@@ -191,6 +196,22 @@ static int my_dma_remove(struct platform_device *pdev){
 
 	return 0;
 }
+
+// Gestion des interruptions
+/*
+int axi_dma_request_irq(struct device_node *channel_node,
+			struct axi_dma_channel *channel,
+			char *irq_name, 
+			irq_handler_t handler_function) {
+	int err;
+	channel->irq = irq_of_parse_and_map(channel_node, 0);
+	err = request_irq(channel->irq, handler_function, 0, irq_name, channel)
+
+	if(err < 0) return err;
+
+	return 0;
+}
+*/
 
 // tableau : compatibles communs à tous nos dma
 // on va discriminer les différents dma en regardant les interruptions de leurs channels 

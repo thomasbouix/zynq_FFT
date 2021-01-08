@@ -17,19 +17,18 @@ int main(int argc, char * argv[]) {
 	if (argc != 2) {
 		printf("Missing arg :\n			\
 			\t1 : MY_DRIVER_PRINT\n		\
-			\t2 : DMA_SIMPLE_WRITE\n	\
-			\t3 : ASSERT_WRITE\n		\
+			\t2 : DMA_READ_S2MM\n		\
+			\t3 : DMA_IOWRITE32_TEST\n	\
 			Terminating\n");
 		return 0;
 	}
 
 	int file = open("/dev/my_dma0", O_RDWR);
 	
-	if(file < 0){
+	if(file < 0) {
 		perror("open");
 		exit(errno);
-	}
-	else {
+	} else {
 		printf("Special file successfully opened\n");
 	}
 
@@ -38,14 +37,14 @@ int main(int argc, char * argv[]) {
 		ioctl(file, MY_DRIVER_PRINT, NULL);
 	} 
 	else if ( strcmp(argv[1], "2") == 0 ) {
-		printf("USER_APP : DMA_SIMPLE_WRITE");	
-		ioctl(file, DMA_SIMPLE_WRITE, NULL);
+		printf("USER_APP : DMA_READ_S2MM");	
+		ioctl(file, DMA_READ_S2MM, NULL);
 	} 
 	else if ( strcmp(argv[1], "3") == 0 ) {
-		printf("USER_APP : ASSERT_WRITE\n");	
-		ioctl(file, ASSERT_WRITE, NULL);
+		printf("USER_APP : DMA_IOWRITE32_TEST\n");	
+		ioctl(file, DMA_IOWRITE32_TEST, NULL);
 	}
-		
+
 	close(file);
 	
 	return 0;

@@ -4,9 +4,8 @@
 #define MODULE_MAJOR 		100
 
 #define MY_DRIVER_PRINT		_IO(MODULE_MAJOR, 0)
-#define DMA_I2S_SIMPLE_READ	_IO(MODULE_MAJOR, 1)
-#define DMA_SIMPLE_WRITE	_IO(MODULE_MAJOR, 2)
-#define ASSERT_WRITE		_IO(MODULE_MAJOR, 3) 
+#define DMA_READ_S2MM		 IO(MODULE_MAJOR, 1)
+#define DMA_IOWRITE32_TEST	_IO(MODULE_MAJOR, 2)
 
 #define IOC_BIT 	12   	// bit de l'interruption IOC des registres de contrôle
 
