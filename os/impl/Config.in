@@ -1,0 +1,2 @@
+source "$BR2_EXTERNAL_IMPL_PATH/package/Config.in"
+source "$BR2_EXTERNAL_IMPL_PATH/package/Config.in.host"

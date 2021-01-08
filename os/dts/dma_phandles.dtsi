@@ -1,0 +1,10 @@
+/ {
+	amba_pl: amba_pl {
+		axi_dma_i2s: axi_dma_impl@0 {
+			dmas = <&axi_dma_0 0>;          // canal 0 du dma axi_dma_0
+			dma-names = "dma_i2s";
+			compatible = "axi_dma_impl";
+		};
+	};
+};
+
