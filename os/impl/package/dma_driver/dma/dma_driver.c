@@ -20,13 +20,15 @@ MODULE_DESCRIPTION("exemple de module");
 MODULE_SUPPORTED_DEVICE("none");
 MODULE_LICENSE("GPL");
 
-// structure instanciée lors d'un probe() : enregistre le device dans le kernel 
+// structure instanciée lors d'un probe() : enregistre le device dans le kernel
 // puis passée dans la struct file lors de open()
 struct my_dma_device {
-	struct platform_device *pdev;	// 
+	struct platform_device *pdev;	//
 	struct cdev cdev;		// Représente un char device
 	dev_t  dt;			// Id du device (major + minor)
-	void __iomem *registers;	// 
+	void __iomem *registers;	//
+	volatile int rx_done;		// booleen afin de savoir si la lecture est terminée
+	volatile int tx_done;		// booleen afin de savoir si l'écriture est terminée
 };
 
 static struct class *class = NULL;
@@ -49,42 +51,54 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
 
 	printk(KERN_DEBUG "DMA_DRIVER : ioctl()\n");
 
-	struct 	my_dma_device * mdev;
-	void * 	user_ptr;
-	void *	buffer_address;
-	size_t	buffer_lenght;
-
-        mdev = file->private_data;
-	user_ptr = (void*) arg;
-
+	struct 	my_dma_device		*	mdev;
+	void * user_ptr;
+	void * buffer_address;
+	size_t	buffer_length;
 	unsigned int read;
+
+	user_ptr = (void*) arg;
+	mdev = file->private_data;
 
 	switch(cmd) {
 		// Ecriture simple dans le kernel ring buffer
 		case DMA_PRINT :
 			printk(KERN_DEBUG "IOCTL : PRINT\n");
 			break;
-		// Lit les données d'un stream et les stocke dans un buffer donné en argument	
+		// Lit les données d'un stream et les stocke dans un buffer donné en argument
 		// user_ptr = buffer_address + buffer length
 		case DMA_READ_S2MM :
 			printk(KERN_DEBUG "IOCTL : DMA_READ_S2MM\n");
-			// buffer_address	= user_ptr;
-			// buffer_lenght	= user_ptr;
+			/*	
+			mdev->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
+			buffer_address	= ((p_axi_dma_buffer) user_ptr)->address;
+			buffer_length	= ((p_axi_dma_buffer) user_ptr)->length;
 			iowrite32(1 | (1 << IOC_BIT), mdev->registers + S2MM_CR);	// active le DMA et l'interruption IOC
+			iowrite32((u32) buffer_address, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
 			iowrite32(buffer_length, mdev->registers + S2MM_LENGTH);	// écrit la taille du buffer dans LENGTH
-			// iowrite32((u32) buffer_address, mdev->registers + S2MM_DA);	// écrit l'adresse du buffer dans DA
-			// idma->rx_done = 0; // on remet le tx_done à 0 pour pouvoir détecter une nouvelle interruption
+			wait_tx_done(mdev);						// attends que la lecture soit complète
+			*/
 			break;
-		// Test l'écriture dans un registre DMA (bus S_AXI_LITE) via iowrite32() 
+		// Test l'écriture dans un registre DMA (bus S_AXI_LITE) via iowrite32()
 		case DMA_IOWRITE32_TEST:
 			printk(KERN_DEBUG "IOCTL : DMA_IOWRITE32_TEST\n");
-			iowrite32(1 | 1 << (IOC_BIT), mdev->registers + S2MM_CR);	
+			iowrite32(1 | 1 << (IOC_BIT), mdev->registers + S2MM_CR);
 			read = ioread32(mdev->registers + S2MM_CR);
-			printk(KERN_DEBUG "IOCTL : read = %u\n", read);	
+			printk(KERN_DEBUG "IOCTL : read = %u\n", read);
 			break;
 
 	return 0;
 }
+
+/*
+static void wait_tx_completion(struct my_dma_device * mdev) {
+	while(!mdev->tx_done);
+}
+
+static void wait_rx_completion(struct my_dma_device * mdev) {
+	while(!mdev->rx_done);
+}
+*/
 
 // assigné pour chaque device avec cdev_init()
 static struct file_operations fops = {
@@ -95,19 +109,19 @@ static struct file_operations fops = {
 
 // Un appel à probe() par device détecté dans le DT
 static int my_dma_probe(struct platform_device *pdev){
-	
+
 	printk(KERN_DEBUG "DMA_DRIVER : probe()\n");
 	printk(KERN_DEBUG "DMA_DRVIER : pdev->name = %s \n", pdev->name);
 
 	// on regarde ici quel est le dma du dt appel probe
-	//	
-	// ptr_node = of_get_child_node( pdev->dev.node, null ); 				// renvoie la première channel du dma 
-	// str = of_read_ppt_string_index( node, comaptibe, lpointeur vers channels, 0 ) 	// renvoie la premiere string du champ compatible 
-	// strcmp(str, "compatible_i2s"); 
+	//
+	// ptr_node = of_get_child_node( pdev->dev.node, null ); 				// renvoie la première channel du dma
+	// str = of_read_ppt_string_index( node, comaptibe, lpointeur vers channels, 0 ) 	// renvoie la premiere string du champ compatible
+	// strcmp(str, "compatible_i2s");
 
 	int ret;			// code d'erreur de nos fonctions
 	struct resource * res;		// informations sur la mémoire du device
-	struct my_dma_device *mdev;	// rassemble toutes les struct kernel décrivant notre device 
+	struct my_dma_device *mdev;	// rassemble toutes les struct kernel décrivant notre device
 	struct device *dev;
 
 	static int instance_num = 0;
@@ -119,12 +133,12 @@ static int my_dma_probe(struct platform_device *pdev){
 	} else {
 		printk(KERN_DEBUG "DMA_DRIVER : kzalloc( my_dma_device ) successful\n");
 	}
-	
+
 	mdev->pdev = pdev;
 	platform_set_drvdata(pdev, mdev);	// fait pointer un champ de pdev vers mdev (alors que pdev est un champ de mdev !)
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0); 		// récupère les adresses mémoires physiques du pdev
-	mdev->registers = devm_ioremap_resource(&pdev->dev, res);	// remappage physique -> kernel 
+	mdev->registers = devm_ioremap_resource(&pdev->dev, res);	// remappage physique -> kernel
 									// pdev->dev alloc et desalloc gérés automatiquement par le kernel
 	if (mdev->registers == NULL) {
 		ret = -ENOMEM;
@@ -149,7 +163,7 @@ static int my_dma_probe(struct platform_device *pdev){
 	} else {
 		printk(KERN_DEBUG "DMA_DRIVER : device_create() successful\n");
 	}
-	
+
 	// ajout des opérations
 	printk(KERN_DEBUG "DMA_DRIVER : cdev_init()\n");
 	cdev_init(&mdev->cdev, &fops);
@@ -164,7 +178,7 @@ static int my_dma_probe(struct platform_device *pdev){
 	}
 
 	return 0;
-	
+
 	device_free:
   	device_destroy(class, mdev->dt);
 	region_free:
@@ -182,44 +196,46 @@ static int my_dma_remove(struct platform_device *pdev){
 	printk(KERN_DEBUG "Supression cdev...\n");
 	cdev_del(&mdev->cdev);
 	printk(KERN_DEBUG "Supression cdev reussie\n");
-	
+
 	printk(KERN_DEBUG "Supression dev...\n");
 	device_destroy(class, mdev->dt);
 	printk(KERN_DEBUG "Supression dev reussie\n");
-	
+
 	printk(KERN_DEBUG "Supression chrdev...\n");
 	unregister_chrdev_region(mdev->dt, 1);
 	printk(KERN_DEBUG "Supression chrdev reussie...\n");
-	
+
 	kfree(mdev);
 	printk(KERN_DEBUG "Dechargement complet reussi\n");
 
 	return 0;
 }
 
-// Gestion des interruptions
+// Connecte une ISR à une IRQ
 /*
 int axi_dma_request_irq(struct device_node *channel_node,
-			struct axi_dma_channel *channel,
-			char *irq_name, 
-			irq_handler_t handler_function) {
+												struct axi_dma_channel *channel,
+												char *irq_name,
+												irq_handler_t handler_function) {
 	int err;
 	channel->irq = irq_of_parse_and_map(channel_node, 0);
 	err = request_irq(channel->irq, handler_function, 0, irq_name, channel)
 
-	if(err < 0) return err;
+	if(err < 0)
+		return err;
 
 	return 0;
 }
 */
 
+
 // tableau : compatibles communs à tous nos dma
-// on va discriminer les différents dma en regardant les interruptions de leurs channels 
-// irq i2s : sortie  
+// on va discriminer les différents dma en regardant les interruptions de leurs channels
+// irq i2s : sortie
 // irq fft : entree-sortie
-// irq vga : entree 
-static const struct of_device_id my_dma_ids[] = { 
-	{.compatible = "xlnx,axi-dma-7.1"}, 
+// irq vga : entree
+static const struct of_device_id my_dma_ids[] = {
+	{.compatible = "xlnx,axi-dma-7.1"},
 	{.compatible = "xlnx,axi-dma-1.00.a"},
 	{},
 };
@@ -230,17 +246,17 @@ MODULE_DEVICE_TABLE(of, my_dma_ids);
 // Initialisation d'une struct pré-existante décrivant le driver
 // probe() + remove() : propres au driver	=> initialisation des devices
 // != open() + release() : propres au device	=> utilisation des devices
-static struct platform_driver my_dma_pdrv = { 
+static struct platform_driver my_dma_pdrv = {
 	.driver = {
 		.name = DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = my_dma_ids,
 	},
 	.probe = my_dma_probe,
-	.remove = my_dma_remove	
+	.remove = my_dma_remove
 };
 
-// Chargement du driver 
+// Chargement du driver
 static int __init mon_module_init(void) {
 	printk(KERN_DEBUG "DMA_DRIVER : init\n");
 	// Créer une classe correspondant à notre module
@@ -259,3 +275,10 @@ static void __exit mon_module_cleanup(void) {
 module_init(mon_module_init);
 module_exit(mon_module_cleanup);
 
+/*
+ S_AXIS_S2MM  M_AXI_S2MM
+STREAM -- > DMA -- > DDR
+
+	M_AXI_MM2S M_AXIS_MM2S
+DDR -- > DMA -- > STREAM
+*/

@@ -33,8 +33,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	if 	( strcmp(argv[1], "1") == 0 ) {
-		printf("USER_APP : MY_DRIVER_PRINT\n");	
-		ioctl(file, MY_DRIVER_PRINT, NULL);
+		printf("USER_APP : DMA_PRINT\n");	
+		ioctl(file, DMA_PRINT, NULL);
 	} 
 	else if ( strcmp(argv[1], "2") == 0 ) {
 		printf("USER_APP : DMA_READ_S2MM");	

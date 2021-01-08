@@ -3,8 +3,8 @@
 
 #define MODULE_MAJOR 		100
 
-#define MY_DRIVER_PRINT		_IO(MODULE_MAJOR, 0)
-#define DMA_READ_S2MM		 IO(MODULE_MAJOR, 1)
+#define DMA_PRINT		_IO(MODULE_MAJOR, 0)
+#define DMA_READ_S2MM		_IO(MODULE_MAJOR, 1)
 #define DMA_IOWRITE32_TEST	_IO(MODULE_MAJOR, 2)
 
 #define IOC_BIT 	12   	// bit de l'interruption IOC des registres de contrôle
@@ -19,4 +19,10 @@
 #define S2MM_DA 	0x48 	// offset du registre S2MM_DA
 #define S2MM_LENGTH 	0x5	// offset du registre S2MM_LENGTH
 
-#endif 				// MY_MACRO_H 
+struct axi_dma_buffer {
+  volatile void * address;	// pointeur vers l'adresse de base du buffer
+  size_t          length;	// taille du buffer
+};
+typedef struct axi_dma_buffer * p_axi_dma_buffer;
+
+#endif 				// MY_MACRO_H
