@@ -7,9 +7,10 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+
 #include "my_macro.h"
 
-#define BUFFER_LENGTH	(10)
+#define BUFFER_LENGTH	10
 
 int main(int argc, char * argv[]) {
 

@@ -1,35 +1,11 @@
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/ioctl.h>
-#include <linux/slab.h>
-#include <linux/cdev.h>
-#include <linux/resource.h>
-#include <linux/of.h>
-#include <linux/fs.h>
-#include <linux/device.h>
-#include <linux/uaccess.h>
-#include <linux/init.h>
-#include <linux/io.h>
-
+#include "dma_driver.h"
 #include "my_macro.h"
-
-#define DRIVER_NAME "my_dma_driver"
 
 MODULE_AUTHOR("ludollaoo");
 MODULE_DESCRIPTION("exemple de module");
 MODULE_SUPPORTED_DEVICE("none");
 MODULE_LICENSE("GPL");
 
-// structure instanciée lors d'un probe() : enregistre le device dans le kernel
-// puis passée dans la struct file lors de open()
-struct my_dma_device {
-	struct platform_device *pdev;	//
-	struct cdev cdev;		// Représente un char device
-	dev_t  dt;			// Id du device (major + minor)
-	void __iomem *registers;	//
-	volatile int rx_done;		// booleen afin de savoir si la lecture est terminée
-	volatile int tx_done;		// booleen afin de savoir si l'écriture est terminée
-};
 
 static struct class *class = NULL;
 
