@@ -1,0 +1,21 @@
+/ {
+	axi_dma_impl_0 : axi_dma_impl@0 {
+		compatible = "axi_dma_impl";
+		dmas = <&axi_dma_0 0>;
+		dma-names = "i2s_rx";
+	};
+	
+	axi_dma_impl_1 : axi_dma_impl@1 {
+		compatible = "axi_dma_impl";
+		dmas = <&axi_dma_1 0, &axi_dma_1 1>;
+		dma-names = "fft_tx, fft_rx";
+	};
+	
+	axi_dma_impl_2 : axi_dma_impl@2 {
+		compatible = "axi_dma_impl";
+		dmas = <&axi_dma_2 0>;
+		dma-names = "vga_tx";
+	};
+};
+	
+
