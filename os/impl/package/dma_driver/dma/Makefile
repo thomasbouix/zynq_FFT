@@ -2,8 +2,8 @@ HERE ?= $(pwd)
 
 EXTRA_CFLAGS := -I$(HERE)../include/
 
-obj-m += axi_dma_driver.o
-axi_dma_driver-objs += ./cdev.o ./dma.o ./of.o ./dev.o ./platform.o
+obj-m += dma_driver.o
+dma_driver-objs += ./cdev.o ./dma.o ./of.o ./dev.o ./platform.o
 
 KSRCDIR ?= /lib/modules/$(shell uname -r)/build/
 
