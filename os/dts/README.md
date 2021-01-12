@@ -1,7 +1,9 @@
 # Syntaxe Device Tree
+```
 label : <name>[@unit-address] {
 	property = "";
 };
+```
 
 - Le label permet à un phandle de faire référence à notre noeud
 - Le nom défini le noeud
@@ -32,7 +34,7 @@ Le fichier user.dtsi permet alors de pointer vers nos différents dma
 # Adaptation du Device Tree
 
 ```
-- Dans le fichier impl/configs/zynq_zedboard_defconfig : 
-  modifier la variable BR2_LINUX_KERNEL_CUSTOM_DTS_PATH pour y ajouter le chemin de user.dtsi
+- Dans le fichier impl/configs/zynq_zedboard_defconfig, modifier la variable 
+BR2_LINUX_KERNEL_CUSTOM_DTS_PATH pour y ajouter le chemin de user.dtsi
 - Relancer le zynq defconfig
 ```
