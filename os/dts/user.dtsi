@@ -17,5 +17,4 @@
 		dma-names = "vga_tx";
 	};
 };
-	
 
