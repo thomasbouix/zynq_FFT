@@ -22,7 +22,9 @@ static irqreturn_t irq_handler(int irq, void *data)
 int axi_dma_dev_init(struct axi_dma_dev *dev)
 {
   int ret;
-  ret = dma_set_mask_and_coherent(&dev->pdev->dev, BIT_MASK(32));
+  // ret = dma_set_mask_and_coherent(&dev->pdev->dev, BIT_MASK(32));
+  ret = dma_set_mask_and_coherent(&dev->pdev->dev, DMA_BIT_MASK(32)); 
+
   if(ret < 0)
   {
     dev_err(&dev->pdev->dev, "Unable to set dma mask\n");

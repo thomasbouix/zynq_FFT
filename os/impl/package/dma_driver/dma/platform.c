@@ -3,6 +3,7 @@
 
 static int axi_dma_probe(struct platform_device *pdev)
 {
+  pr_info("axi_dma_probe");
   int ret;
   struct axi_dma_dev *dev;
   ret = 0;
@@ -48,6 +49,7 @@ static struct platform_driver axi_dma_driver =
 
 int __init axi_dma_init(void)
 {
+  pr_info("axi_dma_init");
   int ret;
   ret = platform_driver_register(&axi_dma_driver);
   if(ret < 0)
