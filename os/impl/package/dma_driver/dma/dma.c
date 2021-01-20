@@ -44,6 +44,7 @@ static int axi_dma_coherent_init(struct axi_dma_channel *chan)
     ptr[AXI_DMA_BD_NEXTDESC >> 2] = chan->sg_handles[i];
     ptr[AXI_DMA_BD_CONTROL >> 2] = chan->buf_size;
     ptr[AXI_DMA_BD_BUFFER_ADDR >> 2] = chan->handles[i - 1];
+    ptr += AXI_DMA_BD_SIZE >> 2;
   }
   // chaînage différencié pour le dernier descripteur
   if(chan->flags & AXI_DMA_FLAG_CYCLIC)
@@ -128,6 +129,24 @@ void axi_dma_buffer_release(struct axi_dma_channel *chan)
 void axi_dma_start(struct axi_dma_channel *chan)
 {
   // TODO
+  if (chan->direction == DMA_TO_DEVICE) {
+    iowrite32(chan->first, chan->parent->register_space + AXI_DMA_MM2S_CURDESC);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_MM2S_DMACR) | AXI_DMA_RUN, chan->parent->register_space + AXI_DMA_MM2S_DMACR);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_MM2S_DMACR) | 1 << 12, chan->parent->register_space + AXI_DMA_MM2S_DMACR);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_MM2S_DMACR) | 1 << 14, chan->parent->register_space + AXI_DMA_MM2S_DMACR);
+    iowrite32(chan->last, chan->parent->register_space + AXI_DMA_MM2S_TAILDESC);
+  }
+  else if (chan->direction == DMA_FROM_DEVICE) {
+    iowrite32(chan->first, chan->parent->register_space + AXI_DMA_S2MM_CURDESC);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_S2MM_DMACR) | AXI_DMA_RUN, chan->parent->register_space + AXI_DMA_S2MM_DMACR);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_S2MM_DMACR) | 1 << 12, chan->parent->register_space + AXI_DMA_S2MM_DMACR);
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_S2MM_DMACR) | 1 << 14, chan->parent->register_space + AXI_DMA_S2MM_DMACR);
+    iowrite32(chan->last, chan->parent->register_space + AXI_DMA_S2MM_TAILDESC);
+  }
+  if(chan->flags & AXI_DMA_FLAG_CYCLIC)
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_MM2S_DMACR) | ((chan->num_handles & 0xFF) << 16), chan->parent->register_space + AXI_DMA_MM2S_DMACR);
+  else if(chan->flags & AXI_DMA_FLAG_DOUBLE_BUFFER)
+    iowrite32(ioread32(chan->parent->register_space + AXI_DMA_MM2S_DMACR) | ((chan->num_handles >> 1 & 0xFF) << 16), chan->parent->register_space + AXI_DMA_MM2S_DMACR);
 }
 
 void axi_dma_wait_irq(struct axi_dma_channel *chan)
@@ -169,6 +188,7 @@ u32 axi_dma_get_register_value(struct axi_dma_channel *chan, int offset)
   reg_space = chan->parent->register_space;
   if(chan->direction == DMA_FROM_DEVICE) reg_space += 0x30; // on décale l'adresse pour les canaux S2MM
   // TODO                                                   // pour avoir les mêmes offsets
+  value = ioread32(reg_space + offset);
   return value;
 }
 
@@ -191,4 +211,3 @@ void axi_dma_swap_buffers(struct axi_dma_channel *chan)
   chan->vlast[AXI_DMA_BD_NEXTDESC >> 2] = chan->first; // on chaine le dernier avec le premier de l'autre buffer
   chan->vlast = vlast;
 }
-
