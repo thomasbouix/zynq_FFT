@@ -42,6 +42,8 @@ extern void xil_printf(const char *format, ...);
 int axi_dma_i2s_loop_config(u16 DeviceId);
 int axi_dma_i2s_loop(void);
 
+u32 sig[LEN_PKT];
+
 XAxiDma AxiDma;
 u32 *RxBufferPtr;
 u32 *TxBufferPtr;
