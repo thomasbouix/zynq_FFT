@@ -1,24 +1,40 @@
-# Adaptation du device tree (depreciated)
-_On n'utilise plus le phandle dans le driver DMA_
-### Le fichier *dma_phandles.dtsi* 
+# Syntaxe Device Tree
 ```
-- Fichier implémentant un noeud par dma dans notre système (i2s, fft, vga)
-- Ces noeuds sont fils du bus amba
-- Ces noeud contiennent un tableau "dmas" (<> = tableau), contenant des tuples appelés "phandles"
-- Ces phandles font alors référence aux channels du dma
-- Chaque phandle possède également un nom, listé dans dma-names
-
-On inclut alors ce fichier dans le fichier system-top.dts, représentant la board
-(fichier top-level)
+label : <name>[@unit-address] {
+	property = "";
+};
 ```
 
-### Procédure
+- Le label permet à un phandle de faire référence à notre noeud
+- Le nom défini le noeud
+- L'adresse est celle du device
+
+# Explication des phandles
+Un phandle est un pointeur vers un noeud. On le définit ainsi :
 ```
-- Ajouter le fichier dma_phandles.dtsi dans os/impl/board/zynq-zedboard/dts
-- Ouvrir le fichier system-top.dts et inclure dma_phandles.dtsi
-- Regénérer le device tree et le fsbl (voir README M.Bresson)
-- Linker dma_phandles.dtsi dans os/output/build/linux-xilinx-v2018.2/arch/arm/boot/dts
-- regénérer le driver 
-- regénérer la distribution
+phandle = <&node\_label>;
+```
+On peut également pointer vers une des propriétés du noeud :
+```
+phandle = <&node\_label N>;
+```
+Avec _N_ la nième propriété du noeud.
+On peut enfin ajouter des propriétés dans notre phandle :
+```
+axi_dma_impl_1: axi_dma_impl@1 {
+	compatible = "impl,axi-dma-impl";
+	dmas = <&axi_dma_1 0 &axi_dma_1 1>;	// Pointe vers les deux cannaux du dma
+        dma-names = "fft_tx", "fft_rx";
+};
 ```
 
+# Explication du fichier user.dtsi
+Le fichier user.dtsi permet alors de pointer vers nos différents dma
+
+# Adaptation du Device Tree
+
+```
+- Dans le fichier impl/configs/zynq_zedboard_defconfig, modifier la variable 
+BR2_LINUX_KERNEL_CUSTOM_DTS_PATH pour y ajouter le chemin de user.dtsi
+- Relancer le zynq defconfig
+```
