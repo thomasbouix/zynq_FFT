@@ -35,7 +35,6 @@ entity axi_vga_controller is
 
 		-- VGA signals
 		vga_clk		      : in  std_logic;
-
 		ver_sync	      : out std_logic;
 		hor_sync	      : out std_logic;
 
@@ -208,7 +207,7 @@ begin
 					end if;
 
 				when WAITVALID =>
-					reg_data <= s_axis_tdata;
+					reg_data        <= s_axis_tdata;
 					if(s_axis_tvalid = '1') then
 						axi_state     <= ACQUIRE;
 					else
